@@ -129,15 +129,19 @@ void main()
     // Obtemos a refletância difusa a partir da leitura da imagem TextureImage0
     vec3 Kd0 = texture(TextureImage0, vec2(U,V)).rgb;
     vec3 Kd1 = texture(TextureImage1, vec2(U,V)).rgb;
+    vec3 Kd2 = texture(TextureImage2, vec2(U,V)).rgb;
 
     // Equação de Iluminação
     float lambert = max(0,dot(n,l));
 
-    color = Kd0 * (lambert + 0.01);
-
-    if(object_id == SPHERE && lambert == 0)
-    {
-        color = Kd1;
+    if ( object_id == PLANE ){
+        color = Kd2 * (lambert + 0.01);
+    }
+    else if ( object_id == SPHERE ){
+        color = Kd0 * (lambert + 0.01);
+    }
+    else if ( object_id == BUNNY ){
+        color = Kd1 * (lambert + 0.01);
     }
 
     // Cor final com correção gamma, considerando monitor sRGB.

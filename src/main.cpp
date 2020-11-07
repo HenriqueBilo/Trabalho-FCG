@@ -48,6 +48,9 @@
 #include "utils.h"
 #include "matrices.h"
 
+// Constantes
+#define M_PI   3.14159265358979323846
+
 // Estrutura que representa um modelo geométrico carregado a partir de um
 // arquivo ".obj". Veja https://en.wikipedia.org/wiki/Wavefront_.obj_file .
 struct ObjModel
@@ -153,6 +156,15 @@ float g_AngleX = 0.0f;
 float g_AngleY = 0.0f;
 float g_AngleZ = 0.0f;
 
+glm::vec4 g_PlayerPosition = glm::vec4(0.0f,0.0f,0.0f,1.0f);
+
+float g_MovementSpeed = 0.005f;
+
+bool g_WKeyPressed = false;
+bool g_AKeyPressed = false;
+bool g_SKeyPressed = false;
+bool g_DKeyPressed = false;
+
 // "g_LeftMouseButtonPressed = true" se o usuário está com o botão esquerdo do mouse
 // pressionado no momento atual. Veja função MouseButtonCallback().
 bool g_LeftMouseButtonPressed = false;
@@ -224,7 +236,7 @@ int main(int argc, char* argv[])
     // Criamos uma janela do sistema operacional, com 800 colunas e 600 linhas
     // de pixels, e com título "INF01047 ...".
     GLFWwindow* window;
-    window = glfwCreateWindow(800, 600, "INF01047 - 299906 - Henrique Alves Bilo", NULL, NULL);
+    window = glfwCreateWindow(800, 600, "INF01047 - Trabalho Final - Henrique e Guilherme", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -269,8 +281,9 @@ int main(int argc, char* argv[])
     LoadShadersFromFiles();
 
     // Carregamos duas imagens para serem utilizadas como textura
-    LoadTextureImage("../../data/tc-earth_daymap_surface.jpg");      // TextureImage0
-    LoadTextureImage("../../data/tc-earth_nightmap_citylights.gif"); // TextureImage1
+    LoadTextureImage("../../data/pixar.png");      // TextureImage0
+    LoadTextureImage("../../data/fur.jpg"); // TextureImage1
+    LoadTextureImage("../../data/grass.jpg"); // TextureImage2
 
     // Construímos a representação de objetos geométricos através de malhas de triângulos
     ObjModel spheremodel("../../data/sphere.obj");
@@ -340,10 +353,16 @@ int main(int argc, char* argv[])
 
         // Abaixo definimos as varáveis que efetivamente definem a câmera virtual.
         // Veja slides 195-227 e 229-234 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
-        glm::vec4 camera_position_c  = glm::vec4(x,y,z,1.0f); // Ponto "c", centro da câmera
-        glm::vec4 camera_lookat_l    = glm::vec4(0.0f,0.0f,0.0f,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
+        glm::vec4 camera_position_c  = g_PlayerPosition + glm::vec4(x,y,z,0.0f); // Ponto "c", centro da câmera
+        glm::vec4 camera_lookat_l    = g_PlayerPosition;//glm::vec4(0.0f,0.0f,0.0f,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
         glm::vec4 camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
         glm::vec4 camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
+
+        glm::vec4 camera_right_vector   = crossproduct(camera_view_vector, camera_up_vector); // Vetor "right", direcao a direita da camera no plano XZ
+        glm::vec4 camera_forward_vector = crossproduct(-camera_right_vector, camera_up_vector); // Vetor "forward", direcao para onde a camera esta olhando no plano XZ
+
+        camera_right_vector /= norm(camera_right_vector);
+        camera_forward_vector /= norm(camera_forward_vector);
 
         // Computamos a matriz "View" utilizando os parâmetros da câmera para
         // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
@@ -355,7 +374,7 @@ int main(int argc, char* argv[])
         // Note que, no sistema de coordenadas da câmera, os planos near e far
         // estão no sentido negativo! Veja slides 176-204 do documento Aula_09_Projecoes.pdf.
         float nearplane = -0.1f;  // Posição do "near plane"
-        float farplane  = -10.0f; // Posição do "far plane"
+        float farplane  = -25.0f; // Posição do "far plane"
 
         if (g_UsePerspectiveProjection)
         {
@@ -390,8 +409,21 @@ int main(int argc, char* argv[])
         #define BUNNY  1
         #define PLANE  2
 
+        if (g_WKeyPressed){
+            g_PlayerPosition += camera_forward_vector * g_MovementSpeed;
+        }
+        if (g_AKeyPressed){
+            g_PlayerPosition -= camera_right_vector * g_MovementSpeed;
+        }
+        if (g_SKeyPressed){
+            g_PlayerPosition -= camera_forward_vector * g_MovementSpeed;
+        }
+        if (g_DKeyPressed){
+            g_PlayerPosition += camera_right_vector * g_MovementSpeed;
+        }
+
         // Desenhamos o modelo da esfera
-        model = Matrix_Translate(-1.0f,0.0f,0.0f)
+        model = Matrix_Translate(-2.0f,0.0f,0.0f)
               * Matrix_Rotate_Z(0.6f)
               * Matrix_Rotate_X(0.2f)
               * Matrix_Rotate_Y(g_AngleY + (float)glfwGetTime() * 0.1f);
@@ -400,14 +432,14 @@ int main(int argc, char* argv[])
         DrawVirtualObject("sphere");
 
         // Desenhamos o modelo do coelho
-        model = Matrix_Translate(1.0f,0.0f,0.0f)
-              * Matrix_Rotate_X(g_AngleX + (float)glfwGetTime() * 0.1f);
+        model = Matrix_Translate(g_PlayerPosition.x,0.0f,g_PlayerPosition.z) 
+                * Matrix_Rotate_Y( g_CameraTheta + M_PI + cos((float)glfwGetTime()*10)/20 );
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, BUNNY);
         DrawVirtualObject("bunny");
 
         // Desenhamos o plano do chão
-        model = Matrix_Translate(0.0f,-1.1f,0.0f);
+        model = Matrix_Translate(0.0f,-1.1f,0.0f) * Matrix_Scale(30.0f,1.0f,30.0f);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, PLANE);
         DrawVirtualObject("plane");
@@ -1205,6 +1237,39 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
         LoadShadersFromFiles();
         fprintf(stdout,"Shaders recarregados!\n");
         fflush(stdout);
+    }
+
+    if (key == GLFW_KEY_W){
+        if ( action == GLFW_PRESS ){
+            g_WKeyPressed = true;
+        }
+        else if ( action == GLFW_RELEASE ){
+            g_WKeyPressed = false;
+        }
+    }
+    if (key == GLFW_KEY_A){
+        if ( action == GLFW_PRESS ){
+            g_AKeyPressed = true;
+        }
+        else if ( action == GLFW_RELEASE ){
+            g_AKeyPressed = false;
+        }
+    }
+    if (key == GLFW_KEY_S){
+        if ( action == GLFW_PRESS ){
+            g_SKeyPressed = true;
+        }
+        else if ( action == GLFW_RELEASE ){
+            g_SKeyPressed = false;
+        }
+    }
+    if (key == GLFW_KEY_D){
+        if ( action == GLFW_PRESS ){
+            g_DKeyPressed = true;
+        }
+        else if ( action == GLFW_RELEASE ){
+            g_DKeyPressed = false;
+        }
     }
 }
 
