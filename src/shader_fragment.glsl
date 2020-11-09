@@ -19,9 +19,16 @@ uniform mat4 view;
 uniform mat4 projection;
 
 // Identificador que define qual objeto está sendo desenhado no momento
-#define SPHERE 0
+#define CHAVE_VERDE 0
 #define BUNNY  1
 #define PLANE  2
+#define CHAVE_AZUL 3
+#define COW 4
+#define WALL 5
+#define WALL_INTERNA 6
+#define CHAVE_VERMELHA 7
+#define PORTA 8
+
 uniform int object_id;
 
 // Parâmetros da axis-aligned bounding box (AABB) do modelo
@@ -32,6 +39,12 @@ uniform vec4 bbox_max;
 uniform sampler2D TextureImage0;
 uniform sampler2D TextureImage1;
 uniform sampler2D TextureImage2;
+uniform sampler2D TextureImage3;
+uniform sampler2D TextureImage4;
+uniform sampler2D TextureImage5;
+uniform sampler2D TextureImage6;
+uniform sampler2D TextureImage7;
+uniform sampler2D TextureImage8;
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec3 color;
@@ -68,7 +81,7 @@ void main()
     float U = 0.0;
     float V = 0.0;
 
-    if ( object_id == SPHERE )
+    /*if ( object_id == SPHERE )
     {
         // PREENCHA AQUI as coordenadas de textura da esfera, computadas com
         // projeção esférica EM COORDENADAS DO MODELO. Utilize como referência
@@ -95,8 +108,8 @@ void main()
 
         U = (teta + M_PI) / (2*M_PI);
         V = (phi + M_PI_2) / M_PI;
-    }
-    else if ( object_id == BUNNY )
+    }*/
+    if ( object_id == BUNNY )
     {
         // PREENCHA AQUI as coordenadas de textura do coelho, computadas com
         // projeção planar XY em COORDENADAS DO MODELO. Utilize como referência
@@ -125,11 +138,87 @@ void main()
         U = texcoords.x;
         V = texcoords.y;
     }
+    else if( object_id == COW)
+    {
+        vec4 bbox_center = (bbox_min + bbox_max) / 2.0;
+
+        vec4 formula_p_linha = bbox_center + normalize(position_model - bbox_center);
+        vec4 p = formula_p_linha - bbox_center;
+
+        //Obtemos os ângulos
+        float teta = atan(p.x, p.z);
+        float phi = asin(p.y);
+
+        U = (teta + M_PI) / (2*M_PI);
+        V = (phi + M_PI_2) / M_PI;
+    }
+    else if( object_id == WALL)
+    {
+        float minx = bbox_min.x;
+        float maxx = bbox_max.x;
+
+        float miny = bbox_min.y;
+        float maxy = bbox_max.y;
+
+        float minz = bbox_min.z;
+        float maxz = bbox_max.z;
+
+        U = (position_model.x - minx) / (maxx - minx);
+        V = (position_model.y - miny) / (maxy - miny);
+    }
+    else if( object_id == WALL_INTERNA )
+    {
+        float minx = bbox_min.x;
+        float maxx = bbox_max.x;
+
+        float miny = bbox_min.y;
+        float maxy = bbox_max.y;
+
+        float minz = bbox_min.z;
+        float maxz = bbox_max.z;
+
+        U = (position_model.x - minx) / (maxx - minx);
+        V = (position_model.y - miny) / (maxy - miny);
+    }
+    else if( object_id == CHAVE_VERMELHA )
+    {
+        float minx = bbox_min.x;
+        float maxx = bbox_max.x;
+
+        float miny = bbox_min.y;
+        float maxy = bbox_max.y;
+
+        float minz = bbox_min.z;
+        float maxz = bbox_max.z;
+
+        U = (position_model.x - minx) / (maxx - minx);
+        V = (position_model.y - miny) / (maxy - miny);
+    }
+    else if( object_id == PORTA )
+    {
+        vec4 bbox_center = (bbox_min + bbox_max) / 2.0;
+
+        vec4 formula_p_linha = bbox_center + normalize(position_model - bbox_center);
+        vec4 p = formula_p_linha - bbox_center;
+
+        //Obtemos os ângulos
+        float teta = atan(p.x, p.z);
+        float phi = asin(p.y);
+
+        U = (teta + M_PI) / (2*M_PI);
+        V = (phi + M_PI_2) / M_PI;
+    }
 
     // Obtemos a refletância difusa a partir da leitura da imagem TextureImage0
     vec3 Kd0 = texture(TextureImage0, vec2(U,V)).rgb;
     vec3 Kd1 = texture(TextureImage1, vec2(U,V)).rgb;
     vec3 Kd2 = texture(TextureImage2, vec2(U,V)).rgb;
+    vec3 Kd3 = texture(TextureImage3, vec2(U,V)).rgb;
+    vec3 Kd4 = texture(TextureImage4, vec2(U,V)).rgb;
+    vec3 Kd5 = texture(TextureImage5, vec2(U,V)).rgb;
+    vec3 Kd6 = texture(TextureImage6, vec2(U,V)).rgb;
+    vec3 Kd7 = texture(TextureImage7, vec2(U,V)).rgb;
+    vec3 Kd8 = texture(TextureImage8, vec2(U,V)).rgb;
 
     // Equação de Iluminação
     float lambert = max(0,dot(n,l));
@@ -137,11 +226,29 @@ void main()
     if ( object_id == PLANE ){
         color = Kd2 * (lambert + 0.01);
     }
-    else if ( object_id == SPHERE ){
-        color = Kd0 * (lambert + 0.01);
-    }
     else if ( object_id == BUNNY ){
         color = Kd1 * (lambert + 0.01);
+    }
+    else if ( object_id == COW ){
+        color = Kd3 * (lambert + 0.01);
+    }
+    else if ( object_id == WALL ){
+        color = Kd4 * (lambert + 0.01);
+    }
+    else if ( object_id == WALL_INTERNA ){
+        color = Kd5 * (lambert + 0.05);
+    }
+    else if ( object_id == CHAVE_AZUL ){
+        color = Kd8 * (lambert + 0.01);
+    }
+    else if ( object_id == CHAVE_VERDE ){
+        color = Kd6 * (lambert + 0.01);
+    }
+    else if ( object_id == CHAVE_VERMELHA ){
+        color = Kd7 * (lambert + 0.01);
+    }
+    else if ( object_id == PORTA ){
+        color = Kd6 * (lambert + 0.05);
     }
 
     // Cor final com correção gamma, considerando monitor sRGB.
