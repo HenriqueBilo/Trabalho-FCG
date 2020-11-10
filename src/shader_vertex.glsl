@@ -11,6 +11,18 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
+#define CHAVE_VERDE 0
+#define BUNNY  1
+#define PLANE  2
+#define CHAVE_AZUL 3
+#define COW 4
+#define WALL 5
+#define WALL_INTERNA 6
+#define CHAVE_VERMELHA 7
+#define PORTA 8
+#define TESTE 9
+uniform int object_id;
+
 // Atributos de vértice que serão gerados como saída ("out") pelo Vertex Shader.
 // ** Estes serão interpolados pelo rasterizador! ** gerando, assim, valores
 // para cada fragmento, os quais serão recebidos como entrada pelo Fragment
@@ -19,6 +31,7 @@ out vec4 position_world;
 out vec4 position_model;
 out vec4 normal;
 out vec2 texcoords;
+out vec3 color_cow;
 
 void main()
 {
@@ -63,5 +76,31 @@ void main()
 
     // Coordenadas de textura obtidas do arquivo OBJ (se existirem!)
     texcoords = texture_coefficients;
+
+    if (object_id == COW){
+        vec4 origin = vec4(0.0, 0.0, 0.0, 1.0);
+        vec4 camera_position = inverse(view) * origin;
+
+        vec4 p = position_world;
+        vec4 n = normalize(normal);
+        vec4 v = normalize(camera_position - p);
+        vec4 l = v;
+        vec4 r = -l + 2*n*dot(n, l);
+        vec4 h = normalize(v + l);
+
+        vec3 Kd = vec3(0.0, 0.0, 1.0);
+        vec3 Ks = vec3(1.0, 0.5, 0.35);
+        vec3 Ka = vec3(0.0, 0.0, 0.0);
+        float q = 20.0;
+
+        vec3 I = vec3(1.0, 1.0, 1.0);
+        vec3 Ia = vec3(0.2, 0.2, 0.2);
+        vec3 lambert_diffuse_term = Kd*I*max(0, dot(n, l));
+        vec3 ambient_term = Ka*Ia;
+        vec3 phong_specular_term  = Ks * I * pow(max(0, dot(n, h)), q);
+
+        color_cow = lambert_diffuse_term + ambient_term + phong_specular_term;
+        color_cow = pow(color_cow, vec3(1.0,1.0,1.0)/2.2);
+    }
 }
 

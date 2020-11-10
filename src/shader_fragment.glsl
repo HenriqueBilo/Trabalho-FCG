@@ -13,6 +13,8 @@ in vec4 position_model;
 // Coordenadas de textura obtidas do arquivo OBJ (se existirem!)
 in vec2 texcoords;
 
+in vec3 color_cow;
+
 // Matrizes computadas no código C++ e enviadas para a GPU
 uniform mat4 model;
 uniform mat4 view;
@@ -28,6 +30,7 @@ uniform mat4 projection;
 #define WALL_INTERNA 6
 #define CHAVE_VERMELHA 7
 #define PORTA 8
+#define TESTE 9
 
 uniform int object_id;
 
@@ -145,10 +148,10 @@ void main()
     else if ( object_id == PLANE )
     {
         // Coordenadas de textura do plano, obtidas do arquivo OBJ.
-        U = texcoords.x;
-        V = texcoords.y;
+        //U = texcoords.x;
+        //V = texcoords.y;
 
-        Kd = texture(TextureImage2, vec2(U,V)).rgb;
+        Kd = texture(TextureImage2, texcoords).rgb;
     }
     else if( object_id == COW)
     {
@@ -271,7 +274,10 @@ void main()
 
         Kd = texture(TextureImage6, vec2(U,V)).rgb;
     }
-
+    else if( object_id == TESTE)
+    {
+        Kd = texture(TextureImage3, texcoords).rgb;
+    }
     // Espectro da fonte de iluminação
     vec3 I = vec3(1.0, 1.0, 1.0); // PREENCH AQUI o espectro da fonte de luz
 
@@ -288,7 +294,8 @@ void main()
     vec3 phong_specular_term  = Ks * I * pow(max(0, dot(n, h)), q); // PREENCH AQUI o termo especular de Phong
 
     //Bota a Blinn-Phong Illumination nas chaves
-    if( object_id == CHAVE_VERMELHA || object_id == CHAVE_AZUL || object_id == CHAVE_VERDE)
+    if( object_id == CHAVE_VERMELHA || object_id == CHAVE_AZUL || object_id == CHAVE_VERDE
+        || object_id == TESTE)
     {
         color = lambert_diffuse_term  + ambient_term + phong_specular_term;
     }
@@ -300,4 +307,8 @@ void main()
     // Cor final com correção gamma, considerando monitor sRGB.
     // Veja https://en.wikipedia.org/w/index.php?title=Gamma_correction&oldid=751281772#Windows.2C_Mac.2C_sRGB_and_TV.2Fvideo_standard_gammas
     color = pow(color, vec3(1.0,1.0,1.0)/2.2);
+
+   if (object_id == COW){
+        color = color_cow;
+   }
 }
