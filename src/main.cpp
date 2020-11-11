@@ -131,6 +131,13 @@ void criaParedeExteriorLadoDireito(glm::mat4 model);
 void criaParedeExteriorFrente(glm::mat4 model);
 void criaParedeExteriorAtras(glm::mat4 model);
 
+// Funcoes para curvas de bezier cubicas parametricas
+float B03( float t );
+float B13( float t );
+float B23( float t );
+float B33( float t );
+glm::vec4 CubicBezier( glm::vec4 p0, glm::vec4 p1, glm::vec4 p2, glm::vec4 p3, float t  );
+
 // Definimos uma estrutura que armazenará dados necessários para renderizar
 // cada objeto da cena virtual.
 struct SceneObject
@@ -406,8 +413,8 @@ int main(int argc, char* argv[])
             camera_view_vector = -glm::vec4(x,y,z,0.0f);
         }
         else {
-            camera_position_c  = g_PlayerPosition + glm::vec4(x,y,z,0.0f);
-            camera_lookat_l    = g_PlayerPosition;
+            camera_position_c  = g_PlayerPosition + glm::vec4(x,y+1.0f,z,0.0f);
+            camera_lookat_l    = g_PlayerPosition + glm::vec4(0.0f,1.0f,0.0f,0.0f);
             camera_view_vector = camera_lookat_l - camera_position_c;
         }
 
@@ -483,6 +490,17 @@ int main(int argc, char* argv[])
             g_PlayerPosition += camera_right_vector * (g_MovementSpeed/2);
         }
 
+        // calculo da curva de bezier sobre o tempo
+        glm::vec4 p0 = glm::vec4(-0.1f,-0.1f,-0.1f, 1.0f);
+        glm::vec4 p1 = glm::vec4( 0.4f, 0.4f, 0.4f, 1.0f);
+        glm::vec4 p2 = glm::vec4(-0.4f, 0.4f,-0.4f, 1.0f);
+        glm::vec4 p3 = glm::vec4( 0.1f,-0.1f, 0.1f, 1.0f);
+
+        float t = (cos((float)glfwGetTime()) + 1.0f)/2.0f;
+
+        glm::vec4 bezier_curve_point = CubicBezier(p0, p1, p2, p3, t);
+    
+
         // Desenhamos o modelo da esfera
         /*model = Matrix_Translate(-2.0f,0.0f,0.0f);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
@@ -519,28 +537,31 @@ int main(int argc, char* argv[])
         DrawVirtualObject("cow");
 
         // Desenhamos o modelo da chave azul
-        model = Matrix_Translate(8.15f,1.0f,17.49f)
+        model = Matrix_Translate(bezier_curve_point.x,bezier_curve_point.y,bezier_curve_point.z)
+                * Matrix_Translate(8.15f,1.0f,17.49f)
                 * Matrix_Rotate_Z(-4.72f)
-                * Matrix_Rotate_X(g_AngleX + (float)glfwGetTime() * 0.6f)
-                * Matrix_Scale(0.5f,0.5f,0.5f);
+                * Matrix_Rotate_X(g_AngleX + (float)glfwGetTime())
+                * Matrix_Scale(0.25f,0.25f,0.25f);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, CHAVE_AZUL);
         DrawVirtualObject("key");
 
         // Desenhamos o modelo da chave verde
-        model = Matrix_Translate(-3.55f,1.0f,-1.17f)
+        model = Matrix_Translate(bezier_curve_point.x,bezier_curve_point.y,bezier_curve_point.z)
+                * Matrix_Translate(-3.55f,1.0f,-1.17f)
                 * Matrix_Rotate_Z(-4.72f)
-                * Matrix_Rotate_X(g_AngleX + (float)glfwGetTime() * 0.6f)
-                * Matrix_Scale(0.5f,0.5f,0.5f);
+                * Matrix_Rotate_X(g_AngleX + (float)glfwGetTime())
+                * Matrix_Scale(0.25f,0.25f,0.25f);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, CHAVE_VERDE);
         DrawVirtualObject("key");
 
         // Desenhamos o modelo da chave vermelha
-        model = Matrix_Translate(2.10f,1.0f,-16.76f)
+        model = Matrix_Translate(bezier_curve_point.x,bezier_curve_point.y,bezier_curve_point.z)
+                * Matrix_Translate(2.10f,1.0f,-16.76f)
                 * Matrix_Rotate_Z(-4.72f)
-                * Matrix_Rotate_X(g_AngleX + (float)glfwGetTime() * 0.6f)
-                * Matrix_Scale(0.5f,0.5f,0.5f);
+                * Matrix_Rotate_X(g_AngleX + (float)glfwGetTime())
+                * Matrix_Scale(0.25f,0.25f,0.25f);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, CHAVE_VERMELHA);
         DrawVirtualObject("key");
@@ -2111,4 +2132,23 @@ void PrintObjModelInfo(ObjModel* model)
 
 // set makeprg=cd\ ..\ &&\ make\ run\ >/dev/null
 // vim: set spell spelllang=pt_br :
+
+// Funcoes para curvas de bezier cubicas parametricas
+float B03( float t ){
+    return pow( 1-t, 3 );
+}
+float B13( float t ){
+    return 3 * t * pow( 1-t, 2 );
+}
+float B23( float t ){
+    return 3 * pow( t, 2 ) * ( 1-t );
+}
+float B33( float t ){
+    return pow( t, 3 );
+}
+glm::vec4 CubicBezier( glm::vec4 p0, glm::vec4 p1, glm::vec4 p2, glm::vec4 p3, float t ){
+    glm::vec4 point = B03(t)*p0 + B13(t)*p1 + B23(t)*p2 + B33(t)*p3;
+
+    return point;
+}
 
