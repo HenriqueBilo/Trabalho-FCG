@@ -147,13 +147,9 @@ void main()
     }
     else if ( object_id == PLANE )
     {
-        // Coordenadas de textura do plano, obtidas do arquivo OBJ.
-        //U = texcoords.x;
-        //V = texcoords.y;
-
         Kd = texture(TextureImage2, texcoords).rgb;
     }
-    else if( object_id == COW)
+    /*else if( object_id == COW)
     {
         vec4 bbox_center = (bbox_min + bbox_max) / 2.0;
 
@@ -168,7 +164,7 @@ void main()
         V = (phi + M_PI_2) / M_PI;
 
         Kd = texture(TextureImage3, vec2(U,V)).rgb;
-    }
+    }*/
     else if( object_id == WALL)
     {
         float minx = bbox_min.x;
@@ -276,7 +272,19 @@ void main()
     }
     else if( object_id == TESTE)
     {
-        Kd = texture(TextureImage3, texcoords).rgb;
+        vec4 bbox_center = (bbox_min + bbox_max) / 2.0;
+
+        vec4 formula_p_linha = bbox_center + normalize(position_model - bbox_center);
+        vec4 p = formula_p_linha - bbox_center;
+
+        //Obtemos os ângulos
+        float teta = atan(p.x, p.z);
+        float phi = asin(p.y);
+
+        U = (teta + M_PI) / (2*M_PI);
+        V = (phi + M_PI_2) / M_PI;
+
+        Kd = texture(TextureImage3, vec2(U,V)).rgb;
     }
     // Espectro da fonte de iluminação
     vec3 I = vec3(1.0, 1.0, 1.0); // PREENCH AQUI o espectro da fonte de luz
