@@ -51,6 +51,9 @@ using namespace std;
 #include "utils.h"
 #include "matrices.h"
 
+#include "Player.hpp"
+#include "AABB.hpp"
+
 // Constantes
 #define M_PI   3.14159265358979323846
 
@@ -117,7 +120,7 @@ void TextRendering_ShowModelViewProjection(GLFWwindow* window, glm::mat4 project
 void TextRendering_ShowEulerAngles(GLFWwindow* window);
 void TextRendering_ShowProjection(GLFWwindow* window);
 void TextRendering_ShowFramesPerSecond(GLFWwindow* window);
-void TextRendering_ShowPosicaoJogador(GLFWwindow* window); //Teste
+void TextRendering_ShowPosicaoJogador(GLFWwindow* window, Player player); //Teste
 
 // Funções callback para comunicação com o sistema operacional e interação do
 // usuário. Veja mais comentários nas definições das mesmas, abaixo.
@@ -179,7 +182,7 @@ float g_AngleY = 0.0f;
 float g_AngleZ = 0.0f;
 
 // Posicao global atual do player
-glm::vec4 g_PlayerPosition = glm::vec4(-17.54f,0.0f,16.20f,1.0f);
+glm::vec4 g_PlayerPosition = glm::vec4(0.0f,0.0f,0.0f,1.0f);//glm::vec4(-17.54f,0.0f,16.20f,1.0f);
 
 // Variaveis que controlam a movimentacao do personagem
 float g_MovementSpeed = 0.05f;
@@ -383,6 +386,10 @@ int main(int argc, char* argv[])
     bool colisaoChaveVermelha = FALSE;
     bool colisaoChaveAzul = FALSE;
 
+    // Inicializacao das classes do jogo
+    Player player(g_PlayerPosition, 3.0f, g_MovementSpeed);
+    // vector<AABB> limits;
+
     // Ficamos em loop, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
     {
@@ -429,15 +436,18 @@ int main(int argc, char* argv[])
 
         // Definicao da camera
         if (g_UseFirstPersonCamera) {
-            camera_position_c  = g_PlayerPosition + glm::vec4(0.0f,1.0f,0.0f,0.0f);
+            //camera_position_c  = g_PlayerPosition + glm::vec4(0.0f,1.0f,0.0f,0.0f);
+            camera_position_c  = player.position + glm::vec4(0.0f,1.0f,0.0f,0.0f);
             camera_view_vector = -glm::vec4(x,y,z,0.0f);
         }
         else {
             //camera_position_c  = g_PlayerPosition + glm::vec4(x,y,z,0.0f);
             //camera_lookat_l    = g_PlayerPosition;
 
-            camera_position_c  = g_PlayerPosition + glm::vec4(x,y+1.0f,z,0.0f);
-            camera_lookat_l    = g_PlayerPosition + glm::vec4(0.0f,1.0f,0.0f,0.0f);
+            //camera_position_c  = g_PlayerPosition + glm::vec4(x,y+1.0f,z,0.0f);
+            //camera_lookat_l    = g_PlayerPosition + glm::vec4(0.0f,1.0f,0.0f,0.0f);
+            camera_position_c  = player.position + glm::vec4(x,y+1.0f,z,0.0f);
+            camera_lookat_l    = player.position + glm::vec4(0.0f,1.0f,0.0f,0.0f);
             camera_view_vector = camera_lookat_l - camera_position_c;
 
         }
@@ -527,22 +537,22 @@ int main(int argc, char* argv[])
             }
 
             // Desenhamos o modelo do personagem (coelho)
-            modelBunny = Matrix_Translate(g_PlayerPosition.x,0.0f,g_PlayerPosition.z)
+            //modelBunny = Matrix_Translate(g_PlayerPosition.x,0.0f,g_PlayerPosition.z)
+            modelBunny = Matrix_Translate(player.position.x,0.0f,player.position.z)
             * Matrix_Rotate_Y( g_CameraTheta - M_PI/2 + animation_coeficient );
             glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(modelBunny));
             glUniform1i(object_id_uniform, BUNNY);
             DrawVirtualObject("bunny");
         }
-        else{
-
-            // Desenhamos o modelo do personagem (coelho) -- Precisava desenhar em 1P também, se não n tem colisão
-            modelBunny = Matrix_Translate(g_PlayerPosition.x,0.0f,g_PlayerPosition.z)
-            * Matrix_Rotate_Y( g_CameraTheta + M_PI);
-            //* Matrix_Rotate_Y( g_CameraTheta - M_PI/2 + animation_coeficient );
-            glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(modelBunny));
-            glUniform1i(object_id_uniform, BUNNY);
-            DrawVirtualObject("bunny");
-        }
+        // else{
+        //     // Desenhamos o modelo do personagem (coelho) -- Precisava desenhar em 1P também, se não n tem colisão
+        //     modelBunny = Matrix_Translate(g_PlayerPosition.x,0.0f,g_PlayerPosition.z)
+        //     * Matrix_Rotate_Y( g_CameraTheta + M_PI);
+        //     //* Matrix_Rotate_Y( g_CameraTheta - M_PI/2 + animation_coeficient );
+        //     glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(modelBunny));
+        //     glUniform1i(object_id_uniform, BUNNY);
+        //     DrawVirtualObject("bunny");
+        // }
 
         // Desenhamos o plano do chão
         model = Matrix_Translate(0.0f,-1.1f,0.0f) * Matrix_Scale(20.0f,1.0f,20.0f);
@@ -859,47 +869,47 @@ int main(int argc, char* argv[])
         //Se essa colisao ocorrer, podemos encerrar o jogo com std::exit(0);
         //Pois a vaca teria sido achada já
 
-        bool colisaoWin = colisaoAABBAABB("cow",
-                                "bunny",
-                                modelCow,
-                                modelBunny
-                                );
+        // bool colisaoWin = colisaoAABBAABB("cow",
+        //                         "bunny",
+        //                         modelCow,
+        //                         modelBunny
+        //                         );
 
-        if(colisaoWin)
-        {
-            std::exit(0);
-        }
+        // if(colisaoWin)
+        // {
+        //     std::exit(0);
+        // }
 
-        if(!colisaoChaveVerde)
-        {
+        // if(!colisaoChaveVerde)
+        // {
 
-            colisaoChaveVerde = colisaoSphereSphere("key",
-                                               "bunny",
-                                               modelChaveVerde,
-                                               modelBunny
-                                               );
-        }
+        //     colisaoChaveVerde = colisaoSphereSphere("key",
+        //                                        "bunny",
+        //                                        modelChaveVerde,
+        //                                        modelBunny
+        //                                        );
+        // }
 
-        if(!colisaoChaveAzul)
-        {
-            colisaoChaveAzul = colisaoSphereSphere("key",
-                                               "bunny",
-                                               modelChaveAzul,
-                                               modelBunny);
-        }
+        // if(!colisaoChaveAzul)
+        // {
+        //     colisaoChaveAzul = colisaoSphereSphere("key",
+        //                                        "bunny",
+        //                                        modelChaveAzul,
+        //                                        modelBunny);
+        // }
 
-        if(!colisaoChaveVermelha)
-        {
-            colisaoChaveVermelha = colisaoSphereSphere("key",
-                                               "bunny",
-                                               modelChaveVermelha,
-                                               modelBunny);
-        }
+        // if(!colisaoChaveVermelha)
+        // {
+        //     colisaoChaveVermelha = colisaoSphereSphere("key",
+        //                                        "bunny",
+        //                                        modelChaveVermelha,
+        //                                        modelBunny);
+        // }
 
-        bool colisaoParede = colisaoAABBSphere("wall",
-                                              "bunny",
-                                              modeloParede,
-                                              modelBunny);
+        // bool colisaoParede = colisaoAABBSphere("wall",
+        //                                       "bunny",
+        //                                       modeloParede,
+        //                                       modelBunny);
 
 
         // ColisaoBug -- Ta meio bugado a parte do tratamento da colisão... A colisão está detectando ok mas na hora de decidir o que fazer com o jogador ta estranho
@@ -907,31 +917,51 @@ int main(int argc, char* argv[])
         // O tratamento que fiz pra quando detectar colisão é basicamente voltar o jogador pra posição que ele tava antes. Porém, se tu gira a camera com o botão esquerdo enquanto colide, da uns pulo meio doido.
 
         // movimentação do personagem
-        if (g_WKeyPressed && !colisaoParede){
-            g_PlayerPosition += camera_forward_vector * g_MovementSpeed;
-        }else if(colisaoParede && g_WKeyPressed){
-            g_PlayerPosition = g_PlayerPosition - camera_forward_vector;
+        if (g_WKeyPressed){
+            //g_PlayerPosition += camera_forward_vector * g_MovementSpeed;
+            player.move( camera_forward_vector );
         }
 
-        if (g_AKeyPressed && !colisaoParede){
-            g_PlayerPosition -= camera_right_vector * (g_MovementSpeed/2);
-        }else if(colisaoParede && g_AKeyPressed){
-            g_PlayerPosition = g_PlayerPosition + camera_right_vector;
+        if (g_AKeyPressed){
+            //g_PlayerPosition -= camera_right_vector * (g_MovementSpeed/2);
+            player.move( -camera_right_vector );
         }
 
-        if (g_SKeyPressed && !colisaoParede){
-            g_PlayerPosition -= camera_forward_vector * (g_MovementSpeed/2);
-        }
-        else if(colisaoParede && g_SKeyPressed){
-            g_PlayerPosition = g_PlayerPosition + camera_forward_vector;
+        if (g_SKeyPressed){
+            //g_PlayerPosition -= camera_forward_vector * (g_MovementSpeed/2);
+            player.move( -camera_forward_vector );
         }
 
-        if (g_DKeyPressed && !colisaoParede){
-            g_PlayerPosition += camera_right_vector * (g_MovementSpeed/2);
+        if (g_DKeyPressed){
+            //g_PlayerPosition += camera_right_vector * (g_MovementSpeed/2);
+            player.move( camera_right_vector );
         }
-        else if(colisaoParede && g_DKeyPressed){
-            g_PlayerPosition = g_PlayerPosition - camera_right_vector;
-        }
+
+        // if (g_WKeyPressed && !colisaoParede){
+        //     g_PlayerPosition += camera_forward_vector * g_MovementSpeed;
+        // }else if(colisaoParede && g_WKeyPressed){
+        //     g_PlayerPosition = g_PlayerPosition - camera_forward_vector;
+        // }
+
+        // if (g_AKeyPressed && !colisaoParede){
+        //     g_PlayerPosition -= camera_right_vector * (g_MovementSpeed/2);
+        // }else if(colisaoParede && g_AKeyPressed){
+        //     g_PlayerPosition = g_PlayerPosition + camera_right_vector;
+        // }
+
+        // if (g_SKeyPressed && !colisaoParede){
+        //     g_PlayerPosition -= camera_forward_vector * (g_MovementSpeed/2);
+        // }
+        // else if(colisaoParede && g_SKeyPressed){
+        //     g_PlayerPosition = g_PlayerPosition + camera_forward_vector;
+        // }
+
+        // if (g_DKeyPressed && !colisaoParede){
+        //     g_PlayerPosition += camera_right_vector * (g_MovementSpeed/2);
+        // }
+        // else if(colisaoParede && g_DKeyPressed){
+        //     g_PlayerPosition = g_PlayerPosition - camera_right_vector;
+        // }
 
 
         // Pegamos um vértice com coordenadas de modelo (0.5, 0.5, 0.5, 1) e o
@@ -943,7 +973,7 @@ int main(int argc, char* argv[])
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
         // terceiro cubo.
-        TextRendering_ShowPosicaoJogador(window);
+        TextRendering_ShowPosicaoJogador(window, player);
         //TextRendering_ShowEulerAngles(window);
 
         // Imprimimos na informação sobre a matriz de projeção sendo utilizada.
@@ -1980,7 +2010,7 @@ void TextRendering_ShowModelViewProjection(
 }
 
 // Escrevemos na tela a posição do jogador
-void TextRendering_ShowPosicaoJogador(GLFWwindow* window)
+void TextRendering_ShowPosicaoJogador(GLFWwindow* window, Player player)
 {
     if ( !g_ShowInfoText )
         return;
@@ -1988,7 +2018,7 @@ void TextRendering_ShowPosicaoJogador(GLFWwindow* window)
     float pad = TextRendering_LineHeight(window);
 
     char buffer[80];
-    snprintf(buffer, 80, "Posicao do jogador = X(%.2f), Y(%.2f), Z(%.2f)\n", g_PlayerPosition.x, g_PlayerPosition.y, g_PlayerPosition.z);
+    snprintf(buffer, 80, "Posicao do jogador = X(%.2f), Y(%.2f), Z(%.2f)\n", player.position.x, player.position.y, player.position.z);
 
     TextRendering_PrintString(window, buffer, -1.0f+pad/10, -1.0f+2*pad/10, 1.0f);
 }
