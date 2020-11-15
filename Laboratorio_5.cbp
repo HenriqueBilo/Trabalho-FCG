@@ -2,7 +2,7 @@
 <CodeBlocks_project_file>
 	<FileVersion major="1" minor="6" />
 	<Project>
-		<Option title="Laboratorio_5" />
+		<Option title="Trabalho-FCG" />
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
@@ -98,9 +98,14 @@
 			<Add option="lib\libglfw3.a -lgdi32 -lopengl32" />
 			<Add directory="lib" />
 		</Linker>
+		<Unit filename="include/AABB.hpp" />
+		<Unit filename="include/Collisions.hpp" />
 		<Unit filename="include/GLFW/glfw3.h" />
 		<Unit filename="include/GLFW/glfw3native.h" />
 		<Unit filename="include/KHR/khrplatform.h" />
+		<Unit filename="include/Player.hpp" />
+		<Unit filename="include/Sphere.hpp" />
+		<Unit filename="include/Wall.hpp" />
 		<Unit filename="include/dejavufont.h" />
 		<Unit filename="include/glad/glad.h" />
 		<Unit filename="include/glm/CMakeLists.txt" />
@@ -369,6 +374,11 @@
 		<Unit filename="include/stb_image.h" />
 		<Unit filename="include/tiny_obj_loader.h" />
 		<Unit filename="include/utils.h" />
+		<Unit filename="src/AABB.cpp" />
+		<Unit filename="src/Collisions.cpp" />
+		<Unit filename="src/Player.cpp" />
+		<Unit filename="src/Sphere.cpp" />
+		<Unit filename="src/Wall.cpp" />
 		<Unit filename="src/glad.c">
 			<Option compilerVar="CC" />
 		</Unit>
