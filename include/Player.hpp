@@ -3,12 +3,11 @@
 #ifndef PLAYER_HPP
 #define PLAYER_HPP
 
-#include <iostream>
-#include <glm/vec4.hpp>
-#include <vector>
 #include "Sphere.hpp"
 #include "AABB.hpp"
-#include "Collisions.hpp"
+#include <glm/vec4.hpp>
+#include <vector>
+#include <iostream>
 
 class Player
 {
@@ -23,7 +22,7 @@ public:
     Player(glm::vec4 pos, float radius, float speed);
     
     // Other methods
-    void move(glm::vec4 direction);
+    void move(glm::vec4 direction, std::vector<AABB> box_colliders);
 };
 
 #endif

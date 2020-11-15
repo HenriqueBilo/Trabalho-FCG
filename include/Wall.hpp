@@ -10,21 +10,13 @@
 class Wall
 {
 public:
-    glm::vec4 position;
+    glm::vec4 center;
     AABB box_collider;
+    bool perpendicular;
 
     // Constructor
-    Wall(glm::vec4 pos, float width, float heigth, float depth, bool is_perpendicular)
-    {
-        position = pos;
-
-        if (is_perpendicular){
-            box_collider = AABB(pos, width, heigth, depth);
-        }
-        else {
-            box_collider = AABB(pos, depth, heigth, width);
-        }
-    }
+    Wall();
+    Wall(glm::vec4 pos, float width, float heigth, float depth, bool is_perpendicular);
 
 };
 
