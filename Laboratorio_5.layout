@@ -2,66 +2,71 @@
 <CodeBlocks_layout_file>
 	<FileVersion major="1" minor="0" />
 	<ActiveTarget name="Debug" />
-	<File name="include\utils.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\main.cpp" open="1" top="1" tabpos="1" split="0" active="1" splitpos="0" zoom_1="3" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="55" topLine="0" />
+			<Cursor1 position="46372" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="src\shader_vertex.glsl" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="2" zoom_2="0">
+	<File name="src\Collisions.cpp" open="1" top="0" tabpos="10" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="2210" topLine="0" />
+			<Cursor1 position="47" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="src\textrendering.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2352" topLine="33" />
 		</Cursor>
 	</File>
 	<File name="include\matrices.h" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="69" topLine="0" />
+			<Cursor1 position="12836" topLine="328" />
 		</Cursor>
 	</File>
-	<File name="src\shader_fragment.glsl" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="2" zoom_2="0">
+	<File name="include\Collisions.hpp" open="1" top="0" tabpos="9" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="7928" topLine="64" />
+			<Cursor1 position="363" topLine="0" />
 		</Cursor>
-		<Folding>
-			<Collapse line="83" />
-		</Folding>
+	</File>
+	<File name="src\shader_vertex.glsl" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="2" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1933" topLine="41" />
+		</Cursor>
 	</File>
 	<File name="src\glad.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="4158" topLine="173" />
 		</Cursor>
 	</File>
-	<File name="src\main.cpp" open="1" top="1" tabpos="1" split="0" active="1" splitpos="0" zoom_1="2" zoom_2="0">
+	<File name="src\AABB.cpp" open="1" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="22926" topLine="462" />
+			<Cursor1 position="23" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="include\utils.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="55" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="src\Player.cpp" open="1" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="632" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="src\shader_fragment.glsl" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="2" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="5609" topLine="185" />
 		</Cursor>
 		<Folding>
-			<Collapse line="56" />
-			<Collapse line="247" />
-			<Collapse line="809" />
-			<Collapse line="970" />
-			<Collapse line="1023" />
-			<Collapse line="1057" />
-			<Collapse line="1112" />
-			<Collapse line="1118" />
-			<Collapse line="1133" />
-			<Collapse line="1195" />
-			<Collapse line="1339" />
-			<Collapse line="1353" />
-			<Collapse line="1368" />
-			<Collapse line="1438" />
-			<Collapse line="1490" />
-			<Collapse line="1514" />
-			<Collapse line="1568" />
-			<Collapse line="1636" />
-			<Collapse line="1654" />
-			<Collapse line="1765" />
-			<Collapse line="1773" />
-			<Collapse line="1780" />
+			<Collapse line="103" />
+			<Collapse line="132" />
+			<Collapse line="148" />
+			<Collapse line="238" />
+			<Collapse line="257" />
 		</Folding>
 	</File>
-	<File name="src\textrendering.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="include\Player.hpp" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="2352" topLine="0" />
+			<Cursor1 position="275" topLine="0" />
 		</Cursor>
 	</File>
 </CodeBlocks_layout_file>
