@@ -29,9 +29,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <algorithm>
-
-#include <iostream> //TESTE
-//using namespace std;
+#include <iostream>
 
 // Headers das bibliotecas OpenGL
 #include <glad/glad.h>   // Criação de contexto OpenGL 3.3
@@ -134,17 +132,13 @@ void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 void CursorPosCallback(GLFWwindow* window, double xpos, double ypos);
 void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 
-//Funções para criação das paredes externas do labirinto
-void criaParedeExteriorLadoEsquerdo(glm::mat4 model);
-void criaParedeExteriorLadoDireito(glm::mat4 model);
-void criaParedeExteriorFrente(glm::mat4 model);
-void criaParedeExteriorAtras(glm::mat4 model);
-
 // Funcoes para desenhar os objetos do jogo
 void DrawWall(Wall wall);
+void DrawInternalWall(Wall internalWall);
 
 // Funcoes de instanciacao de objetos
 void CreateWalls(std::vector<Wall> &walls);
+void CreateInternalWalls(std::vector<Wall> &walls);
 
 // Funcoes para curvas de bezier cubicas parametricas
 float B03( float t );
@@ -397,14 +391,27 @@ int main(int argc, char* argv[])
 
     // Inicializacao das classes do jogo
     Player player(g_PlayerPosition, 1.0f, g_MovementSpeed);
+
+    // Paredes externas
     std::vector<Wall> walls;
     CreateWalls(walls);
+
+    // Paredes internas
+    std::vector<Wall> internalWalls;
+    CreateInternalWalls(internalWalls);
+
+    // Chaves
+//    std::vector<Key> keys;
 
     std::vector<AABB> wall_colliders;
     for (auto wall : walls) {
             wall_colliders.push_back(wall.box_collider);
-        }
-    
+    }
+
+    for(auto internalWall : internalWalls){
+            wall_colliders.push_back(internalWall.box_collider);
+    }
+
     // Ficamos em loop, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
     {
@@ -507,8 +514,6 @@ int main(int argc, char* argv[])
             projection = Matrix_Orthographic(l, r, b, t, nearplane, farplane);
         }
 
-
-
         // Enviamos as matrizes "view" e "projection" para a placa de vídeo
         // (GPU). Veja o arquivo "shader_vertex.glsl", onde estas são
         // efetivamente aplicadas em todos os pontos.
@@ -536,13 +541,6 @@ int main(int argc, char* argv[])
 
         glm::vec4 bezier_curve_point = CubicBezier(p0, p1, p2, p3, t);
 
-
-        // Desenhamos o modelo da esfera
-        /*model = Matrix_Translate(-2.0f,0.0f,0.0f);
-        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(object_id_uniform, SPHERE);
-        DrawVirtualObject("sphere");*/
-
         if (!g_UseFirstPersonCamera){
 
             float animation_coeficient = 0;
@@ -552,22 +550,12 @@ int main(int argc, char* argv[])
             }
 
             // Desenhamos o modelo do personagem (coelho)
-            //modelBunny = Matrix_Translate(g_PlayerPosition.x,0.0f,g_PlayerPosition.z)
             modelBunny = Matrix_Translate(player.position.x,player.position.y ,player.position.z)
             * Matrix_Rotate_Y( g_CameraTheta - M_PI/2 + animation_coeficient );
             glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(modelBunny));
             glUniform1i(object_id_uniform, BUNNY);
             DrawVirtualObject("bunny");
         }
-        // else{
-        //     // Desenhamos o modelo do personagem (coelho) -- Precisava desenhar em 1P também, se não n tem colisão
-        //     modelBunny = Matrix_Translate(g_PlayerPosition.x,0.0f,g_PlayerPosition.z)
-        //     * Matrix_Rotate_Y( g_CameraTheta + M_PI);
-        //     //* Matrix_Rotate_Y( g_CameraTheta - M_PI/2 + animation_coeficient );
-        //     glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(modelBunny));
-        //     glUniform1i(object_id_uniform, BUNNY);
-        //     DrawVirtualObject("bunny");
-        // }
 
         // Desenhamos o plano do chão
         model = Matrix_Translate(0.0f,g_FloorLevel,0.0f) * Matrix_Scale(20.0f,1.0f,20.0f);
@@ -576,8 +564,6 @@ int main(int argc, char* argv[])
         DrawVirtualObject("plane");
 
         // Desenhamos o modelo da vaca
-        //glm::vec4(17.54f,0.0f,16.20f,1.0f);
-        //vec4(-17.54f,0.0f,16.20f,1.0f);
         modelCow = Matrix_Translate(-14.54f,0.0f,-2.15f)
                     * Matrix_Scale(2.0f,2.0f,2.0f);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(modelCow));
@@ -650,20 +636,9 @@ int main(int argc, char* argv[])
             DrawWall(wall);
         }
 
-        // Paredes externas que seriam o limite do mapa
-        // criaParedeExteriorLadoEsquerdo(model);
-        // criaParedeExteriorFrente(model);
-        // criaParedeExteriorLadoDireito(model);
-        // criaParedeExteriorAtras(model);
-
-        //Paredes internas do labirinto
-
-        modeloParede = Matrix_Translate(-15.0f,g_FloorLevel,14.0f)
-                 * Matrix_Rotate_Y(4.72f)
-                 * Matrix_Scale(0.50f,0.50f,0.50f);
-        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(modeloParede));
-        glUniform1i(object_id_uniform, WALL_INTERNA);
-        DrawVirtualObject("wall");
+        for(auto wall : internalWalls){
+            DrawInternalWall(wall);
+        }
 
         /*model = Matrix_Translate(-15.0f,g_FloorLevel,14.0f)
                  * Matrix_Rotate_Y(4.72f)
@@ -1024,12 +999,11 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-
 void DrawWall(Wall wall){
 
     glm::mat4 model = Matrix_Translate(wall.center.x, wall.center.y-3, wall.center.z)
                     * Matrix_Scale(0.50f,0.50f,0.50f);
-    
+
     if(wall.perpendicular){
         model = model * Matrix_Rotate_Y( M_PI / 2.0f );
     }
@@ -1039,9 +1013,55 @@ void DrawWall(Wall wall){
     DrawVirtualObject("wall");
 }
 
-void CreateWalls(std::vector<Wall> &walls){
-    // walls.push_back(Wall( glm::vec4(  0.0f,g_FloorLevel,  0.0f, 1.0f), 10, 6, 1, false ));
+void DrawInternalWall(Wall wall){
 
+    glm::mat4 model = Matrix_Translate(wall.center.x, wall.center.y-3, wall.center.z)
+                    * Matrix_Scale(wall.tamanho.x,wall.tamanho.y,wall.tamanho.z);
+
+    if(wall.perpendicular){
+        model = model * Matrix_Rotate_Y( M_PI / 2.0f );
+    }
+
+    glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+    glUniform1i(object_id_uniform, WALL_INTERNA);
+    DrawVirtualObject("wall");
+}
+
+void CreateInternalWalls(std::vector<Wall> &internalWalls)
+{
+    internalWalls.push_back(Wall(glm::vec4(-15.0f,g_FloorLevel, 14.0f, 1.0f), 10, 6, 1, true,  glm::vec4(0.50f,0.50f,0.50f,1.0f)));
+    internalWalls.push_back(Wall( glm::vec4(-13.5f,g_FloorLevel, 8.5f, 1.0f), 5, 6, 1, false, glm::vec4(0.20f,0.50f,0.50f,1.0f)));
+    internalWalls.push_back(Wall( glm::vec4(-11.0f,g_FloorLevel, 6.0f, 1.0f), 6, 6, 1, true, glm::vec4(0.50f,0.50f,0.30f,1.0f) ));
+    internalWalls.push_back(Wall( glm::vec4(-13.0f,g_FloorLevel, 2.8f, 1.0f), 5, 6, 1, false, glm::vec4(0.25f,0.50f,0.40f,1.0f) ));
+    internalWalls.push_back(Wall( glm::vec4(-15.0f,g_FloorLevel, -5.5f, 1.0f), 10, 6, 1, true, glm::vec4(0.50f,0.50f,0.50f,1.0f) ));
+    internalWalls.push_back(Wall( glm::vec4(-15.0f,g_FloorLevel, -12.5f, 1.0f), 5, 6, 1, true, glm::vec4(0.50f,0.50f,0.20f,1.0f) ));
+    internalWalls.push_back(Wall( glm::vec4(-10.5f,g_FloorLevel, -14.5f, 1.0f), 10, 6, 1, false, glm::vec4(0.50f,0.50f,0.50f,1.0f) ));
+    internalWalls.push_back(Wall( glm::vec4(-0.50f,g_FloorLevel, -14.5f, 1.0f), 10, 6, 1, false, glm::vec4(0.50f,0.50f,0.50f,1.0f) ));
+    internalWalls.push_back(Wall( glm::vec4(5.0f,g_FloorLevel, -14.5f, 1.0f), 10, 6, 1, true, glm::vec4(0.50f,0.50f,0.50f,1.0f) ));
+    internalWalls.push_back(Wall( glm::vec4(-6.45f,g_FloorLevel, -9.13f, 1.0f), 15, 6, 1, true, glm::vec4(0.50f,0.50f,0.50f,1.0f) ));
+    internalWalls.push_back(Wall( glm::vec4(-6.45f,g_FloorLevel, -1.63f, 1.0f), 6, 6, 1, true, glm::vec4(0.30f,0.50f,0.50f,1.0f) ));
+    internalWalls.push_back(Wall( glm::vec4(-3.89f,g_FloorLevel, 3.63f, 1.0f), 6, 6, 1, false, glm::vec4(0.30f,0.50f,0.50f,1.0f) ));
+    internalWalls.push_back(Wall( glm::vec4(-0.5f,g_FloorLevel, 1.15f, 1.0f), 15, 6, 1, true, glm::vec4(0.50f,0.50f,0.90f,1.0f) ));
+    internalWalls.push_back(Wall( glm::vec4(-0.42f,g_FloorLevel, 12.60f, 1.0f), 6, 6, 1, true, glm::vec4(0.50f,0.50f,0.30f,1.0f) ));
+    internalWalls.push_back(Wall( glm::vec4(-7.20f,g_FloorLevel, 16.0f, 1.0f), 6, 6, 1, true, glm::vec4(0.50f,0.50f,0.30f,1.0f) ));
+    internalWalls.push_back(Wall( glm::vec4(-10.94f,g_FloorLevel, 11.82f, 1.0f), 7, 6, 1, true, glm::vec4(0.50f,0.50f,0.35f,1.0f) ));
+    internalWalls.push_back(Wall( glm::vec4(-6.35f,g_FloorLevel, 6.0f, 1.0f), 5, 6, 1, true, glm::vec4(0.50f,0.50f,0.20f,1.0f) ));
+    internalWalls.push_back(Wall( glm::vec4(-5.72f,g_FloorLevel, 13.51f, 1.0f), 2, 6, 1, false, glm::vec4(0.15f,0.50f,0.50f,1.0f) ));
+    internalWalls.push_back(Wall( glm::vec4(-10.88f,g_FloorLevel, -5.02f, 1.0f), 6, 6, 1, true, glm::vec4(0.50f,0.50f,0.45f,1.0f) ));
+    internalWalls.push_back(Wall( glm::vec4(-5.88f,g_FloorLevel, -9.80f, 1.0f), 5, 6, 1, false, glm::vec4(0.50f,0.50f,0.25f,1.0f) ));
+    internalWalls.push_back(Wall( glm::vec4(6.37f,g_FloorLevel, 16.20f, 1.0f), 6, 6, 1, true, glm::vec4(0.50f,0.50f,0.30f,1.0f) ));
+    internalWalls.push_back(Wall( glm::vec4(4.5f,g_FloorLevel, 10.25f, 1.0f), 10, 6, 1, false, glm::vec4(0.50f,0.50f,0.50f,1.0f) ));
+    internalWalls.push_back(Wall( glm::vec4(9.25f,g_FloorLevel, -3.55f, 1.0f), 10, 6, 1, true, glm::vec4(0.50f,0.50f,0.50f,1.0f) ));
+    internalWalls.push_back(Wall( glm::vec4(17.15f,g_FloorLevel, -12.90f, 1.0f), 5, 6, 1, false, glm::vec4(0.26f,0.50f,0.50f,1.0f) ));
+    internalWalls.push_back(Wall( glm::vec4(8.46f,g_FloorLevel, -12.84f, 1.0f), 6, 6, 1, false, glm::vec4(0.30f,0.50f,0.50f,1.0f) ));
+    internalWalls.push_back(Wall( glm::vec4(15.0f,g_FloorLevel, 14.0f, 1.0f), 10, 6, 1, true, glm::vec4(0.50f,0.50f,0.50f,1.0f) ));
+    internalWalls.push_back(Wall( glm::vec4(15.0f,g_FloorLevel, 5.0f, 1.0f), 8, 6, 1, true, glm::vec4(0.50f,0.50f,0.40f,1.0f) ));
+    internalWalls.push_back(Wall( glm::vec4(10.5f,g_FloorLevel, 2.0f, 1.0f), 10, 6, 1, false,glm::vec4(0.51f,0.50f,0.50f,1.0f) ));
+    internalWalls.push_back(Wall( glm::vec4(15.0f,g_FloorLevel, -7.5f, 1.0f), 10, 6, 1, true, glm::vec4(0.50f,0.50f,0.50f,1.0f) ));
+    internalWalls.push_back(Wall( glm::vec4(5.0f,g_FloorLevel, 1.0f, 1.0f), 10, 6, 1, true, glm::vec4(0.50f,0.50f,0.50f,1.0f) ));
+}
+
+void CreateWalls(std::vector<Wall> &walls){
     // Paredes do limite exterior
         // limite Z positivo
     walls.push_back(Wall( glm::vec4( 15.0f,g_FloorLevel, 19.5f, 1.0f), 10, 6, 1, false ));
@@ -1064,140 +1084,6 @@ void CreateWalls(std::vector<Wall> &walls){
     walls.push_back(Wall( glm::vec4(-19.5f,g_FloorLevel, -5.0f, 1.0f), 10, 6, 1, true ));
     walls.push_back(Wall( glm::vec4(-19.5f,g_FloorLevel,-15.0f, 1.0f), 10, 6, 1, true ));
 }
-
-// void criaParedeExteriorLadoEsquerdo(glm::mat4 model)
-// {
-//     model = Matrix_Translate(15.0f,g_FloorLevel,19.5f)
-//     //* Matrix_Rotate_Y(90.0f)
-//     * Matrix_Scale(0.50f,0.50f,0.50f);
-//     glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-//     glUniform1i(object_id_uniform, WALL);
-//     DrawVirtualObject("wall");
-
-//     model = Matrix_Translate(5.0f,g_FloorLevel,19.5f)
-//     //* Matrix_Rotate_Y(90.0f)
-//     * Matrix_Scale(0.50f,0.50f,0.50f);
-//     glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-//     glUniform1i(object_id_uniform, WALL);
-//     DrawVirtualObject("wall");
-
-//     model = Matrix_Translate(-5.0f,g_FloorLevel,19.5f)
-//     //* Matrix_Rotate_Y(90.0f)
-//     * Matrix_Scale(0.50f,0.50f,0.50f);
-//     glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-//     glUniform1i(object_id_uniform, WALL);
-//     DrawVirtualObject("wall");
-
-//     model = Matrix_Translate(-15.0f,g_FloorLevel,19.5f)
-//     //* Matrix_Rotate_Y(90.0f)
-//     * Matrix_Scale(0.50f,0.50f,0.50f);
-//     glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-//     glUniform1i(object_id_uniform, WALL);
-//     DrawVirtualObject("wall");
-// }
-
-// void criaParedeExteriorLadoDireito(glm::mat4 model)
-// {
-//     model = Matrix_Translate(15.0f,g_FloorLevel,-19.5f)
-//     * Matrix_Scale(0.50f,0.50f,0.50f);
-//     glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-//     glUniform1i(object_id_uniform, WALL);
-//     DrawVirtualObject("wall");
-
-//     model = Matrix_Translate(5.0f,g_FloorLevel,-19.5f)
-//     * Matrix_Scale(0.50f,0.50f,0.50f);
-//     glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-//     glUniform1i(object_id_uniform, WALL);
-//     DrawVirtualObject("wall");
-
-//      model = Matrix_Translate(-5.0f,g_FloorLevel,-19.5f)
-//     * Matrix_Scale(0.50f,0.50f,0.50f);
-//     glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-//     glUniform1i(object_id_uniform, WALL);
-//     DrawVirtualObject("wall");
-
-//      model = Matrix_Translate(-15.0f,g_FloorLevel,-19.5f)
-//     * Matrix_Scale(0.50f,0.50f,0.50f);
-//     glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-//     glUniform1i(object_id_uniform, WALL);
-//     DrawVirtualObject("wall");
-// }
-
-// void criaParedeExteriorFrente(glm::mat4 model)
-// {
-//     model = Matrix_Translate(-19.5f,g_FloorLevel,14.0f)
-//     * Matrix_Rotate_Y(4.72f)
-//     * Matrix_Scale(0.50f,0.50f,0.50f);
-//     glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-//     glUniform1i(object_id_uniform, WALL);
-//     DrawVirtualObject("wall");
-
-//     model = Matrix_Translate(-19.5f,g_FloorLevel,6.5f)
-//     * Matrix_Rotate_Y(4.72f)
-//     * Matrix_Scale(0.50f,0.50f,0.50f);
-//     glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-//     glUniform1i(object_id_uniform, WALL);
-//     DrawVirtualObject("wall");
-
-//     model = Matrix_Translate(-19.5f,g_FloorLevel,-1.0f)
-//     * Matrix_Rotate_Y(4.72f)
-//     * Matrix_Scale(0.50f,0.50f,0.50f);
-//     glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-//     glUniform1i(object_id_uniform, WALL);
-//     DrawVirtualObject("wall");
-
-//      model = Matrix_Translate(-19.5f,g_FloorLevel,-8.5f)
-//     * Matrix_Rotate_Y(4.72f)
-//     * Matrix_Scale(0.50f,0.50f,0.50f);
-//     glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-//     glUniform1i(object_id_uniform, WALL);
-//     DrawVirtualObject("wall");
-
-//      model = Matrix_Translate(-19.5f,g_FloorLevel,-16.0f)
-//     * Matrix_Rotate_Y(4.72f)
-//     * Matrix_Scale(0.50f,0.50f,0.50f);
-//     glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-//     glUniform1i(object_id_uniform, WALL);
-//     DrawVirtualObject("wall");
-// }
-
-// void criaParedeExteriorAtras(glm::mat4 model)
-// {
-//     model = Matrix_Translate(19.5f,g_FloorLevel,14.0f)
-//     * Matrix_Rotate_Y(4.72f)
-//     * Matrix_Scale(0.50f,0.50f,0.50f);
-//     glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-//     glUniform1i(object_id_uniform, WALL);
-//     DrawVirtualObject("wall");
-
-//     model = Matrix_Translate(19.5f,g_FloorLevel,6.5f)
-//     * Matrix_Rotate_Y(4.72f)
-//     * Matrix_Scale(0.50f,0.50f,0.50f);
-//     glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-//     glUniform1i(object_id_uniform, WALL);
-//     DrawVirtualObject("wall");
-
-//     model = Matrix_Translate(19.5f,g_FloorLevel,-1.0f)
-//     * Matrix_Rotate_Y(4.72f)
-//     * Matrix_Scale(0.50f,0.50f,0.50f);
-//     glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-//     glUniform1i(object_id_uniform, WALL);
-//     DrawVirtualObject("wall");
-
-//     model = Matrix_Translate(19.5f,g_FloorLevel,-8.5f)
-//     * Matrix_Rotate_Y(4.72f)
-//     * Matrix_Scale(0.50f,0.50f,0.50f);
-//     glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-//     glUniform1i(object_id_uniform, WALL);
-//     DrawVirtualObject("wall");
-
-//     model = Matrix_Translate(19.5f,g_FloorLevel,-16.0f)
-//     * Matrix_Rotate_Y(4.72f)
-//     * Matrix_Scale(0.50f,0.50f,0.50f);
-//     glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-//     glUniform1i(object_id_uniform, WALL);
-//     DrawVirtualObject("wall");
-// }
 
 // Função que carrega uma imagem para ser utilizada como textura
 void LoadTextureImage(const char* filename)
