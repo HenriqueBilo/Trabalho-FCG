@@ -240,6 +240,9 @@ GLint bbox_max_uniform;
 // Número de texturas carregadas pela função LoadTextureImage()
 GLuint g_NumLoadedTextures = 0;
 
+#include <Windows.h>
+#include <MMSystem.h>
+
 int main(int argc, char* argv[])
 {
     // Inicializamos a biblioteca GLFW, utilizada para criar uma janela do
@@ -412,9 +415,12 @@ int main(int argc, char* argv[])
             wall_colliders.push_back(internalWall.box_collider);
     }
 
+    sndPlaySound("../../media/shrek.wav", SND_ASYNC);
+
     // Ficamos em loop, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
     {
+
         // Aqui executamos as operações de renderização
         glm::mat4 model = Matrix_Identity(); // Transformação identidade de modelagem
         glm::mat4 modelBunny = Matrix_Identity(); // Transformação identidade do coelho

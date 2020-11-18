@@ -3953,7 +3953,7 @@
 	<inttypes.h>
 	<stdint.h>
 
-1605481739 source:c:\users\henri\desktop\trabalho fcg\trabalho-fcg\src\main.cpp
+1605717679 source:c:\users\henri\desktop\trabalho fcg\trabalho-fcg\src\main.cpp
 	<cmath>
 	<cstdio>
 	<cstdlib>
@@ -3979,6 +3979,8 @@
 	"Player.hpp"
 	"AABB.hpp"
 	"Wall.hpp"
+	<Windows.h>
+	<MMSystem.h>
 
 1605466713 c:\users\henri\desktop\trabalho fcg\trabalho-fcg\include\glfw\glfw3.h
 	<stddef.h>
@@ -4819,4 +4821,101 @@
 	<iostream>
 	<glm/vec4.hpp>
 	"Sphere.hpp"
+
+1517310246 c:\users\henri\desktop\trabalho fcg\trabalho-fcg\include\irrklang.h
+	"ik_irrKlangTypes.h"
+	"ik_vec3d.h"
+	"ik_IRefCounted.h"
+	"ik_IVirtualRefCounted.h"
+	"ik_ESoundOutputDrivers.h"
+	"ik_ESoundEngineOptions.h"
+	"ik_EStreamModes.h"
+	"ik_SAudioStreamFormat.h"
+	"ik_ISoundEngine.h"
+	"ik_ISoundSource.h"
+	"ik_ISound.h"
+	"ik_IAudioStream.h"
+	"ik_IAudioStreamLoader.h"
+	"ik_ISoundEffectControl.h"
+	"ik_ISoundStopEventReceiver.h"
+	"ik_IFileFactory.h"
+	"ik_IFileReader.h"
+	"ik_ISoundDeviceList.h"
+	"ik_IAudioRecorder.h"
+	"ik_ISoundMixedOutputReceiver.h"
+
+1517230808 c:\users\henri\desktop\trabalho fcg\trabalho-fcg\include\ik_irrklangtypes.h
+	<wchar.h>
+
+1517230808 c:\users\henri\desktop\trabalho fcg\trabalho-fcg\include\ik_vec3d.h
+	<math.h>
+	"ik_irrKlangTypes.h"
+
+1517230808 c:\users\henri\desktop\trabalho fcg\trabalho-fcg\include\ik_irefcounted.h
+	"ik_irrKlangTypes.h"
+
+1517230808 c:\users\henri\desktop\trabalho fcg\trabalho-fcg\include\ik_ivirtualrefcounted.h
+	"ik_irrKlangTypes.h"
+
+1517230808 c:\users\henri\desktop\trabalho fcg\trabalho-fcg\include\ik_esoundoutputdrivers.h
+
+1517230808 c:\users\henri\desktop\trabalho fcg\trabalho-fcg\include\ik_esoundengineoptions.h
+
+1517230808 c:\users\henri\desktop\trabalho fcg\trabalho-fcg\include\ik_estreammodes.h
+
+1517230808 c:\users\henri\desktop\trabalho fcg\trabalho-fcg\include\ik_saudiostreamformat.h
+	"ik_IRefCounted.h"
+
+1517230808 c:\users\henri\desktop\trabalho fcg\trabalho-fcg\include\ik_isoundengine.h
+	"ik_IRefCounted.h"
+	"ik_vec3d.h"
+	"ik_ISoundSource.h"
+	"ik_ISound.h"
+	"ik_EStreamModes.h"
+	"ik_IFileFactory.h"
+	"ik_ISoundMixedOutputReceiver.h"
+
+1517230832 c:\users\henri\desktop\trabalho fcg\trabalho-fcg\include\ik_isoundsource.h
+	"ik_IVirtualRefCounted.h"
+	"ik_vec3d.h"
+	"ik_EStreamModes.h"
+	"ik_SAudioStreamFormat.h"
+
+1517230808 c:\users\henri\desktop\trabalho fcg\trabalho-fcg\include\ik_isound.h
+	"ik_IVirtualRefCounted.h"
+	"ik_ISoundEffectControl.h"
+	"ik_vec3d.h"
+
+1517230808 c:\users\henri\desktop\trabalho fcg\trabalho-fcg\include\ik_isoundeffectcontrol.h
+	"ik_IVirtualRefCounted.h"
+	"ik_vec3d.h"
+
+1517230808 c:\users\henri\desktop\trabalho fcg\trabalho-fcg\include\ik_ifilefactory.h
+	"ik_IRefCounted.h"
+
+1517230808 c:\users\henri\desktop\trabalho fcg\trabalho-fcg\include\ik_isoundmixedoutputreceiver.h
+	"ik_IRefCounted.h"
+	"ik_SAudioStreamFormat.h"
+
+1517230808 c:\users\henri\desktop\trabalho fcg\trabalho-fcg\include\ik_iaudiostream.h
+	"ik_IRefCounted.h"
+	"ik_SAudioStreamFormat.h"
+
+1517230808 c:\users\henri\desktop\trabalho fcg\trabalho-fcg\include\ik_iaudiostreamloader.h
+	"ik_IRefCounted.h"
+	"ik_IFileReader.h"
+
+1517230808 c:\users\henri\desktop\trabalho fcg\trabalho-fcg\include\ik_ifilereader.h
+	"ik_IRefCounted.h"
+
+1517230808 c:\users\henri\desktop\trabalho fcg\trabalho-fcg\include\ik_isoundstopeventreceiver.h
+	"ik_IRefCounted.h"
+	"ik_SAudioStreamFormat.h"
+
+1517230808 c:\users\henri\desktop\trabalho fcg\trabalho-fcg\include\ik_isounddevicelist.h
+	"ik_IRefCounted.h"
+
+1517230824 c:\users\henri\desktop\trabalho fcg\trabalho-fcg\include\ik_iaudiorecorder.h
+	"ik_IRefCounted.h"
+	"ik_ISoundSource.h"
 
