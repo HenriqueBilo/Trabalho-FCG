@@ -9,10 +9,12 @@
 #include <iostream>
 #include "AABB.hpp"
 #include "Sphere.hpp"
+#include <glm/vec4.hpp>
 
 
 bool Box2BoxCollision(AABB a, AABB b);
 bool Box2SphereCollision(AABB box, Sphere sphere);
 bool Sphere2SphereCollision(Sphere a, Sphere b);
+bool Point2SphereCollision(glm::vec4 point, Sphere sphere);
 
 #endif
