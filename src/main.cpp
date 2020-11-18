@@ -151,6 +151,7 @@ glm::vec4 CubicBezier( glm::vec4 p0, glm::vec4 p1, glm::vec4 p2, glm::vec4 p3, f
 GLboolean colisaoAABBAABB(const char* nomeObjeto1, const char* nomeObjeto2, glm::mat4 model1, glm::mat4 model2);
 GLboolean colisaoAABBSphere(const char* nomeObjeto1, const char* nomeObjeto2, glm::mat4 model1, glm::mat4 model2);
 GLboolean colisaoSphereSphere(const char* nomeObjeto1, const char* nomeObjeto2, glm::mat4 model1, glm::mat4 model2);
+GLboolean colisaoPointSphere(const char* nomeObjeto, glm::mat4 model,  glm::vec4 point);
 
 // Definimos uma estrutura que armazenará dados necessários para renderizar
 // cada objeto da cena virtual.
@@ -415,7 +416,9 @@ int main(int argc, char* argv[])
             wall_colliders.push_back(internalWall.box_collider);
     }
 
-    sndPlaySound("../../media/shrek.wav", SND_ASYNC);
+    // SONS
+    //sndPlaySound("../../media/shrek.wav", SND_ASYNC);
+    //sndPlaySound("../../media/chave.wav", SND_ASYNC);
 
     // Ficamos em loop, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
@@ -483,13 +486,46 @@ int main(int argc, char* argv[])
         glm::vec4 camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
         glm::vec4 camera_right_vector   = crossproduct(camera_view_vector, camera_up_vector); // Vetor "right", direcao a direita da camera no plano XZ
         glm::vec4 camera_forward_vector = crossproduct(-camera_right_vector, camera_up_vector); // Vetor "forward", direcao a frente da camera no plano XZ
+        glm::mat4 view;
 
         camera_right_vector /= norm(camera_right_vector);
         camera_forward_vector /= norm(camera_forward_vector);
 
         // Computamos a matriz "View" utilizando os parâmetros da câmera para
         // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
-        glm::mat4 view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
+
+        bool teste = colisaoPointSphere("bunny",
+                                modelBunny,
+                                camera_view_vector);
+                                //camera_view_vector,
+                                //camera_up_vector);
+
+        if(!teste)
+        {
+            view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
+
+           // movimentação do personagem
+            if (g_WKeyPressed){
+                    //g_PlayerPosition += camera_forward_vector * g_MovementSpeed;
+                    player.move( camera_forward_vector, wall_colliders );
+            }
+
+            if (g_AKeyPressed){
+                    //g_PlayerPosition -= camera_right_vector * (g_MovementSpeed/2);
+                    player.move( -camera_right_vector, wall_colliders );
+            }
+
+            if (g_SKeyPressed){
+                    //g_PlayerPosition -= camera_forward_vector * (g_MovementSpeed/2);
+                    player.move( -camera_forward_vector, wall_colliders );
+            }
+
+            if (g_DKeyPressed){
+                    //g_PlayerPosition += camera_right_vector * (g_MovementSpeed/2);
+                    player.move( camera_right_vector, wall_colliders );
+            }
+
+        }
 
         // Agora computamos a matriz de Projeção.
         glm::mat4 projection;
@@ -916,26 +952,7 @@ int main(int argc, char* argv[])
         // A minha ideia era só não deixar o jogador se mover, mas acho que teria que fazer uma verificação antes do personagem se mover...Não consegui fazer isso
         // O tratamento que fiz pra quando detectar colisão é basicamente voltar o jogador pra posição que ele tava antes. Porém, se tu gira a camera com o botão esquerdo enquanto colide, da uns pulo meio doido.
 
-        // movimentação do personagem
-        if (g_WKeyPressed){
-            //g_PlayerPosition += camera_forward_vector * g_MovementSpeed;
-            player.move( camera_forward_vector, wall_colliders );
-        }
 
-        if (g_AKeyPressed){
-            //g_PlayerPosition -= camera_right_vector * (g_MovementSpeed/2);
-            player.move( -camera_right_vector, wall_colliders );
-        }
-
-        if (g_SKeyPressed){
-            //g_PlayerPosition -= camera_forward_vector * (g_MovementSpeed/2);
-            player.move( -camera_forward_vector, wall_colliders );
-        }
-
-        if (g_DKeyPressed){
-            //g_PlayerPosition += camera_right_vector * (g_MovementSpeed/2);
-            player.move( camera_right_vector, wall_colliders );
-        }
 
         // if (g_WKeyPressed && !colisaoParede){
         //     g_PlayerPosition += camera_forward_vector * g_MovementSpeed;
@@ -2231,6 +2248,41 @@ glm::vec4 CubicBezier( glm::vec4 p0, glm::vec4 p1, glm::vec4 p2, glm::vec4 p3, f
 
     return point;
 }
+
+GLboolean colisaoPointSphere(const char* nomeObjeto, glm::mat4 model,  glm::vec4 point)
+{
+     glm::vec4 a_min = glm::vec4(g_VirtualScene[nomeObjeto].bbox_min, 1.0f);
+ 	 glm::vec4 a_max = glm::vec4(g_VirtualScene[nomeObjeto].bbox_max, 1.0f);
+
+     a_min = model * a_min;
+     a_max = model * a_max;
+
+     glm::vec4 sphere_center = glm::vec4((a_min.x + a_max.x)/2,
+                                         (a_min.y + a_max.y)/2,
+                                         (a_min.z + a_max.z)/2,
+                                        1.0f);
+
+    float sphere_radius = std::max(glm::abs(a_max.x - sphere_center.x),
+                                    std::max(glm::abs(a_max.y - sphere_center.y),
+                                             glm::abs(a_max.z - sphere_center.z)));
+
+     float x = std::max(a_min.x, glm::min(sphere_center.x, a_max.x));
+     float y = std::max(a_min.y, glm::min(sphere_center.y, a_max.y));
+     float z = std::max(a_min.z, glm::min(sphere_center.z, a_max.z));
+
+     float distance = glm::sqrt((point.x - sphere_center.x) * (point.x - sphere_center.x) +
+                                 (point.y - sphere_center.y) * (point.y - sphere_center.y) +
+                                 (point.z - sphere_center.z) * (point.z - sphere_center.z));
+
+     bool collision = distance < sphere_radius;
+
+     //if (collision){
+        //std::cout << "colisaoPointSphere " << nomeObjeto << ": TRUE" << glfwGetTime() << "\n";
+     //}
+
+    return collision;
+}
+
 
 // Funcoes de colisoes
 // Baseadas no link https://developer.mozilla.org/en-US/docs/Games/Techniques/3D_collision_detection
