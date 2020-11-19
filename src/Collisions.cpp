@@ -34,3 +34,10 @@ bool Sphere2SphereCollision(Sphere a, Sphere b){
 
     return distance < (a.radius + b.radius);
 }
+
+bool Point2BoxCollision(glm::vec4 point, AABB box){
+    return
+        (point.x <= box.max.x && point.x >= box.min.x) &&
+        (point.y <= box.max.y && point.y >= box.min.y) &&
+        (point.z <= box.max.z && point.z >= box.min.z);
+}

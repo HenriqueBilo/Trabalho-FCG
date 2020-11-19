@@ -15,5 +15,6 @@
 bool Box2BoxCollision(AABB a, AABB b);
 bool Box2SphereCollision(AABB box, Sphere sphere);
 bool Sphere2SphereCollision(Sphere a, Sphere b);
+bool Point2BoxCollision(glm::vec4 point, AABB box);
 
 #endif
