@@ -34,16 +34,3 @@ bool Sphere2SphereCollision(Sphere a, Sphere b){
 
     return distance < (a.radius + b.radius);
 }
-
-
-bool Point2SphereCollision(glm::vec4 point, Sphere sphere){
-    float distance = std::sqrt(
-                            (point.x - sphere.center.x)
-                            +
-                            (point.y - sphere.center.y)
-                            +
-                            (point.z - sphere.center.z)
-    ); 
-
-    return distance < sphere.radius;
-}
