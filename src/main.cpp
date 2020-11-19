@@ -190,14 +190,18 @@ bool g_AKeyPressed = false;
 bool g_SKeyPressed = false;
 bool g_DKeyPressed = false;
 
+bool g_1KeyPressed = false;
+bool g_2KeyPressed = false;
+bool g_3KeyPressed = false;
+
+bool g_UseFirstPersonCamera = false;
+bool g_ThirdPersonCameraBlocked = false;
+
 // "g_LeftMouseButtonPressed = true" se o usuário está com o botão esquerdo do mouse
 // pressionado no momento atual. Veja função MouseButtonCallback().
 bool g_LeftMouseButtonPressed = false;
 bool g_RightMouseButtonPressed = false; // Análogo para botão direito do mouse
 bool g_MiddleMouseButtonPressed = false; // Análogo para botão do meio do mouse
-
-// Variavel do tipo de camera
-bool g_UseFirstPersonCamera = false;
 
 // Variáveis que definem a câmera em coordenadas esféricas, controladas pelo
 // usuário através do mouse (veja função CursorPosCallback()). A posição
@@ -379,9 +383,9 @@ int main(int argc, char* argv[])
     glm::mat4 the_view;
 
     //Teste
-    int randX = rand()%(0-10 + 1) + 0;
-    int randZ = rand()%(0-10 + 1) + 0;
-    int level = 1;
+    // int randX = rand()%(0-10 + 1) + 0;
+    // int randZ = rand()%(0-10 + 1) + 0;
+    // int level = 1;
 
     bool colisaoChaveVerde = FALSE;
     bool colisaoChaveVermelha = FALSE;
@@ -395,8 +399,8 @@ int main(int argc, char* argv[])
     CreateWalls(walls);
 
     // Paredes internas
-    std::vector<Wall> internalWalls;
-    CreateInternalWalls(internalWalls);
+    // std::vector<Wall> internalWalls;
+    // CreateInternalWalls(internalWalls);
 
     // Chaves
 //    std::vector<Key> keys;
@@ -406,9 +410,9 @@ int main(int argc, char* argv[])
             wall_colliders.push_back(wall.box_collider);
     }
 
-    for(auto internalWall : internalWalls){
-            wall_colliders.push_back(internalWall.box_collider);
-    }
+    // for(auto internalWall : internalWalls){
+    //         wall_colliders.push_back(internalWall.box_collider);
+    // }
 
     // SONS
     //sndPlaySound("../../media/shrek.wav", SND_ASYNC);
@@ -434,7 +438,7 @@ int main(int argc, char* argv[])
         // Conversaremos sobre sistemas de cores nas aulas de Modelos de Iluminação.
         //
         //           R     G     B     A
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        glClearColor(0.53f, 0.81f, 0.92f, 1.0f);
 
         // "Pintamos" todos os pixels do framebuffer com a cor definida acima,
         // e também resetamos todos os pixels do Z-buffer (depth buffer).
@@ -448,6 +452,18 @@ int main(int argc, char* argv[])
         // variáveis g_CameraDistance, g_CameraPhi, e g_CameraTheta são
         // controladas pelo mouse do usuário. Veja as funções CursorPosCallback()
         // e ScrollCallback().
+
+        //Camera Limits
+        float phimax = M_PI/2 - 0.01f;
+        float phimin = g_UseFirstPersonCamera ? -phimax : 0;
+        float distmin = 2 * player.sphere_collider.radius;
+        float distmax = 4 * player.sphere_collider.radius;
+
+        if (g_CameraDistance < distmin) g_CameraDistance = distmin;
+        if (g_CameraDistance > distmax) g_CameraDistance = distmax;
+        if (g_CameraPhi > phimax) g_CameraPhi = phimax;
+        if (g_CameraPhi < phimin) g_CameraPhi = phimin;
+
         float r = g_CameraDistance;
         float y = r*sin(g_CameraPhi);
         float z = r*cos(g_CameraPhi)*cos(g_CameraTheta);
@@ -480,7 +496,6 @@ int main(int argc, char* argv[])
         glm::vec4 camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
         glm::vec4 camera_right_vector   = crossproduct(camera_view_vector, camera_up_vector); // Vetor "right", direcao a direita da camera no plano XZ
         glm::vec4 camera_forward_vector = crossproduct(-camera_right_vector, camera_up_vector); // Vetor "forward", direcao a frente da camera no plano XZ
-        glm::mat4 view;
 
         camera_right_vector /= norm(camera_right_vector);
         camera_forward_vector /= norm(camera_forward_vector);
@@ -488,33 +503,25 @@ int main(int argc, char* argv[])
         // Computamos a matriz "View" utilizando os parâmetros da câmera para
         // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
 
-        bool teste = false;
+        //std::cout << "View Vector (" << camera_view_vector.x << ", " << camera_view_vector.y << ", " << camera_view_vector.z << ", " << camera_view_vector.w << ")" << std::endl;
+        //std::cout << "Phi (" << g_CameraPhi << ")  Theta (" << g_CameraTheta << ")\n"; 
+        glm::mat4 view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
 
-        if(!teste)
-        {
-            view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
+        // movimentação do personagem
+        if (g_WKeyPressed){
+                player.move( camera_forward_vector, wall_colliders );
+        }
 
-           // movimentação do personagem
-            if (g_WKeyPressed){
-                    //g_PlayerPosition += camera_forward_vector * g_MovementSpeed;
-                    player.move( camera_forward_vector, wall_colliders );
-            }
+        if (g_AKeyPressed){
+                player.move( -camera_right_vector, wall_colliders );
+        }
 
-            if (g_AKeyPressed){
-                    //g_PlayerPosition -= camera_right_vector * (g_MovementSpeed/2);
-                    player.move( -camera_right_vector, wall_colliders );
-            }
+        if (g_SKeyPressed){
+                player.move( -camera_forward_vector, wall_colliders );
+        }
 
-            if (g_SKeyPressed){
-                    //g_PlayerPosition -= camera_forward_vector * (g_MovementSpeed/2);
-                    player.move( -camera_forward_vector, wall_colliders );
-            }
-
-            if (g_DKeyPressed){
-                    //g_PlayerPosition += camera_right_vector * (g_MovementSpeed/2);
-                    player.move( camera_right_vector, wall_colliders );
-            }
-
+        if (g_DKeyPressed){
+                player.move( camera_right_vector, wall_colliders );
         }
 
         // Agora computamos a matriz de Projeção.
@@ -597,7 +604,9 @@ int main(int argc, char* argv[])
 
         // Desenhamos o modelo da vaca
         modelCow = Matrix_Translate(-14.54f,0.0f,-2.15f)
-                    * Matrix_Scale(2.0f,2.0f,2.0f);
+                 * Matrix_Scale( g_1KeyPressed ? 2.0f : 1.0f,
+                                 g_2KeyPressed ? 2.0f : 1.0f, 
+                                 g_3KeyPressed ? 2.0f : 1.0f );
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(modelCow));
         glUniform1i(object_id_uniform, COW);
         DrawVirtualObject("cow");
@@ -614,12 +623,10 @@ int main(int argc, char* argv[])
         if(!colisaoChaveVerde)
         {
             modelChaveVerde = Matrix_Translate(bezier_curve_point.x,bezier_curve_point.y,bezier_curve_point.z)
-                * Matrix_Translate(-3.55f,1.0f,-1.17f)
-                * Matrix_Rotate_Z(-4.72f)
-                //* Matrix_Rotate_X(g_AngleX + (float)glfwGetTime() * 0.6f)
-                //* Matrix_Scale(0.5f,0.5f,0.5f);
-                * Matrix_Rotate_X(g_AngleX + (float)glfwGetTime())
-                * Matrix_Scale(0.25f,0.25f,0.25f);
+                            * Matrix_Translate(-3.55f,1.0f,-1.17f)
+                            * Matrix_Rotate_Z(-4.72f)
+                            * Matrix_Rotate_X((float)glfwGetTime())
+                            * Matrix_Scale(0.25f,0.25f,0.25f);
             glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(modelChaveVerde));
             glUniform1i(object_id_uniform, CHAVE_VERDE);
             DrawVirtualObject("key");
@@ -631,10 +638,10 @@ int main(int argc, char* argv[])
             // Desenhamos o modelo da chave azul
             //model = Matrix_Translate(8.15f,1.0f,17.49f)
             modelChaveAzul = Matrix_Translate(bezier_curve_point.x,bezier_curve_point.y,bezier_curve_point.z)
-                    * Matrix_Translate(8.15f,1.0f,17.49f)
-                    * Matrix_Rotate_Z(-4.72f)
-                    * Matrix_Rotate_X(g_AngleX + (float)glfwGetTime())
-                    * Matrix_Scale(0.25f,0.25f,0.25f);
+                           * Matrix_Translate(8.15f,1.0f,17.49f)
+                           * Matrix_Rotate_Z(-4.72f)
+                           * Matrix_Rotate_X((float)glfwGetTime())
+                           * Matrix_Scale(0.25f,0.25f,0.25f);
             glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(modelChaveAzul));
             glUniform1i(object_id_uniform, CHAVE_AZUL);
             DrawVirtualObject("key");
@@ -645,12 +652,10 @@ int main(int argc, char* argv[])
         {
             // Desenhamos o modelo da chave vermelha
             modelChaveVermelha = Matrix_Translate(bezier_curve_point.x,bezier_curve_point.y,bezier_curve_point.z)
-                    * Matrix_Translate(2.10f,1.0f,-16.76f)
-                    * Matrix_Rotate_Z(-4.72f)
-                    //* Matrix_Rotate_X(g_AngleX + (float)glfwGetTime() * 0.6f)
-                    //* Matrix_Scale(0.5f,0.5f,0.5f);
-                    * Matrix_Rotate_X(g_AngleX + (float)glfwGetTime())
-                    * Matrix_Scale(0.25f,0.25f,0.25f);
+                               * Matrix_Translate(2.10f,1.0f,-16.76f)
+                               * Matrix_Rotate_Z(-4.72f)
+                               * Matrix_Rotate_X((float)glfwGetTime())
+                               * Matrix_Scale(0.25f,0.25f,0.25f);
             glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(modelChaveVermelha));
             glUniform1i(object_id_uniform, CHAVE_VERMELHA);
             DrawVirtualObject("key");
@@ -668,9 +673,9 @@ int main(int argc, char* argv[])
             DrawWall(wall);
         }
 
-        for(auto wall : internalWalls){
-            DrawInternalWall(wall);
-        }
+        // for(auto wall : internalWalls){
+        //     DrawInternalWall(wall);
+        // }
 
 
         // Pegamos um vértice com coordenadas de modelo (0.5, 0.5, 0.5, 1) e o
@@ -1417,16 +1422,6 @@ void CursorPosCallback(GLFWwindow* window, double xpos, double ypos)
         g_CameraTheta -= 0.01f*dx;
         g_CameraPhi   += 0.01f*dy;
 
-        // Em coordenadas esféricas, o ângulo phi deve ficar entre -pi/2 e +pi/2.
-        float phimax = 3.141592f/2;
-        float phimin = -phimax;
-
-        if (g_CameraPhi > phimax)
-            g_CameraPhi = phimax;
-
-        if (g_CameraPhi < phimin)
-            g_CameraPhi = phimin;
-
         // Atualizamos as variáveis globais para armazenar a posição atual do
         // cursor como sendo a última posição conhecida do cursor.
         g_LastCursorPosX = xpos;
@@ -1599,6 +1594,32 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
     if (key == GLFW_KEY_C && action == GLFW_PRESS)
     {
         g_UseFirstPersonCamera = !g_UseFirstPersonCamera;
+    }
+
+    // Binds para transformcoes geometricas
+    if (key == GLFW_KEY_1){
+        if ( action == GLFW_PRESS ){
+            g_1KeyPressed = true;
+        }
+        else if ( action == GLFW_RELEASE ){
+            g_1KeyPressed = false;
+        }
+    }
+    if (key == GLFW_KEY_2){
+        if ( action == GLFW_PRESS ){
+            g_2KeyPressed = true;
+        }
+        else if ( action == GLFW_RELEASE ){
+            g_2KeyPressed = false;
+        }
+    }
+    if (key == GLFW_KEY_3){
+        if ( action == GLFW_PRESS ){
+            g_3KeyPressed = true;
+        }
+        else if ( action == GLFW_RELEASE ){
+            g_3KeyPressed = false;
+        }
     }
 }
 
