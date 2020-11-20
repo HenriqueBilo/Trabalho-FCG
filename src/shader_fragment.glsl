@@ -13,6 +13,8 @@ in vec4 position_model;
 // Coordenadas de textura obtidas do arquivo OBJ (se existirem!)
 in vec2 texcoords;
 
+in vec3 color_cow;
+
 // Matrizes computadas no código C++ e enviadas para a GPU
 uniform mat4 model;
 uniform mat4 view;
@@ -28,6 +30,7 @@ uniform mat4 projection;
 #define WALL_INTERNA 6
 #define CHAVE_VERMELHA 7
 #define PORTA 8
+#define TESTE 9
 
 uniform int object_id;
 
@@ -42,9 +45,11 @@ uniform sampler2D TextureImage2;
 uniform sampler2D TextureImage3;
 uniform sampler2D TextureImage4;
 uniform sampler2D TextureImage5;
-uniform sampler2D TextureImage6;
-uniform sampler2D TextureImage7;
-uniform sampler2D TextureImage8;
+
+uniform vec3 Kd_uniform; // Refletância difusa
+uniform vec3 Ks_uniform; // Refletância especular
+uniform vec3 Ka_uniform; // Refletância ambiente
+uniform float q_uniform; // Expoente especular para o modelo de iluminação de Phong
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec3 color;
@@ -71,11 +76,23 @@ void main()
     // normais de cada vértice.
     vec4 n = normalize(normal);
 
-    // Vetor que define o sentido da fonte de luz em relação ao ponto atual.
-    vec4 l = normalize(vec4(1.0,1.0,0.0,0.0));
-
     // Vetor que define o sentido da câmera em relação ao ponto atual.
     vec4 v = normalize(camera_position - p);
+
+    // Vetor que define o sentido da fonte de luz em relação ao ponto atual.
+    //vec4 l = normalize(vec4(1.0,1.0,0.0,0.0));
+    vec4 l = v;
+
+    // Vetor que define o sentido da reflexão especular ideal.
+    vec4 r = -l + 2*n*dot(n, l); // PREENCHA AQUI o vetor de reflexão especular ideal
+
+    vec4 h = normalize(v + l);
+
+    // Parâmetros que definem as propriedades espectrais da superfície
+    vec3 Kd; // Refletância difusa
+    vec3 Ks; // Refletância especular
+    vec3 Ka; // Refletância ambiente
+    float q; // Expoente especular para o modelo de iluminação de Phong
 
     // Coordenadas de textura U e V
     float U = 0.0;
@@ -111,15 +128,6 @@ void main()
     }*/
     if ( object_id == BUNNY )
     {
-        // PREENCHA AQUI as coordenadas de textura do coelho, computadas com
-        // projeção planar XY em COORDENADAS DO MODELO. Utilize como referência
-        // o slides 99-104 do documento Aula_20_Mapeamento_de_Texturas.pdf,
-        // e também use as variáveis min*/max* definidas abaixo para normalizar
-        // as coordenadas de textura U e V dentro do intervalo [0,1]. Para
-        // tanto, veja por exemplo o mapeamento da variável 'p_v' utilizando
-        // 'h' no slides 158-160 do documento Aula_20_Mapeamento_de_Texturas.pdf.
-        // Veja também a Questão 4 do Questionário 4 no Moodle.
-
         float minx = bbox_min.x;
         float maxx = bbox_max.x;
 
@@ -131,14 +139,14 @@ void main()
 
         U = (position_model.x - minx) / (maxx - minx);
         V = (position_model.y - miny) / (maxy - miny);
+
+        Kd = texture(TextureImage1, vec2(U,V)).rgb;
     }
     else if ( object_id == PLANE )
     {
-        // Coordenadas de textura do plano, obtidas do arquivo OBJ.
-        U = texcoords.x;
-        V = texcoords.y;
+        Kd = texture(TextureImage2, texcoords).rgb;
     }
-    else if( object_id == COW)
+    /*else if( object_id == COW)
     {
         vec4 bbox_center = (bbox_min + bbox_max) / 2.0;
 
@@ -151,7 +159,9 @@ void main()
 
         U = (teta + M_PI) / (2*M_PI);
         V = (phi + M_PI_2) / M_PI;
-    }
+
+        Kd = texture(TextureImage3, vec2(U,V)).rgb;
+    }*/
     else if( object_id == WALL)
     {
         float minx = bbox_min.x;
@@ -165,6 +175,8 @@ void main()
 
         U = (position_model.x - minx) / (maxx - minx);
         V = (position_model.y - miny) / (maxy - miny);
+
+        Kd = texture(TextureImage4, vec2(U,V)).rgb;
     }
     else if( object_id == WALL_INTERNA )
     {
@@ -179,20 +191,29 @@ void main()
 
         U = (position_model.x - minx) / (maxx - minx);
         V = (position_model.y - miny) / (maxy - miny);
+
+        Kd = texture(TextureImage5, vec2(U,V)).rgb;
     }
     else if( object_id == CHAVE_VERMELHA )
     {
-        float minx = bbox_min.x;
-        float maxx = bbox_max.x;
-
-        float miny = bbox_min.y;
-        float maxy = bbox_max.y;
-
-        float minz = bbox_min.z;
-        float maxz = bbox_max.z;
-
-        U = (position_model.x - minx) / (maxx - minx);
-        V = (position_model.y - miny) / (maxy - miny);
+        Kd = vec3(1.0, 0.0, 0.0);
+        Ks = vec3(1.0, 1.0, 1.0);
+        Ka = vec3(0.2, 0.3, 1.0);
+        q = 20.0;
+    }
+    else if( object_id == CHAVE_AZUL )
+    {
+        Kd = vec3(0.0, 0.0, 1.0);
+        Ks = vec3(1.0, 1.0, 1.0);
+        Ka = vec3(0.2, 0.3, 1.0);
+        q = 20.0;
+    }
+    else if( object_id == CHAVE_VERDE)
+    {
+        Kd = vec3(0.0, 1.0, 0.0);
+        Ks = vec3(1.0, 1.0, 1.0);
+        Ka = vec3(0.2, 0.3, 1.0);
+        q = 20.0;
     }
     else if( object_id == PORTA )
     {
@@ -207,52 +228,56 @@ void main()
 
         U = (teta + M_PI) / (2*M_PI);
         V = (phi + M_PI_2) / M_PI;
-    }
 
-    // Obtemos a refletância difusa a partir da leitura da imagem TextureImage0
-    vec3 Kd0 = texture(TextureImage0, vec2(U,V)).rgb;
-    vec3 Kd1 = texture(TextureImage1, vec2(U,V)).rgb;
-    vec3 Kd2 = texture(TextureImage2, vec2(U,V)).rgb;
-    vec3 Kd3 = texture(TextureImage3, vec2(U,V)).rgb;
-    vec3 Kd4 = texture(TextureImage4, vec2(U,V)).rgb;
-    vec3 Kd5 = texture(TextureImage5, vec2(U,V)).rgb;
-    vec3 Kd6 = texture(TextureImage6, vec2(U,V)).rgb;
-    vec3 Kd7 = texture(TextureImage7, vec2(U,V)).rgb;
-    vec3 Kd8 = texture(TextureImage8, vec2(U,V)).rgb;
+        Kd = vec3(0.543,0.27,0.074);
+    }
+    else if( object_id == TESTE)
+    {
+        vec4 bbox_center = (bbox_min + bbox_max) / 2.0;
 
-    // Equação de Iluminação
-    float lambert = max(0,dot(n,l));
+        vec4 formula_p_linha = bbox_center + normalize(position_model - bbox_center);
+        vec4 p = formula_p_linha - bbox_center;
 
-    if ( object_id == PLANE ){
-        color = Kd2 * (lambert + 0.01);
+        //Obtemos os ângulos
+        float teta = atan(p.x, p.z);
+        float phi = asin(p.y);
+
+        U = (teta + M_PI) / (2*M_PI);
+        V = (phi + M_PI_2) / M_PI;
+
+        Kd = texture(TextureImage3, vec2(U,V)).rgb;
     }
-    else if ( object_id == BUNNY ){
-        color = Kd1 * (lambert + 0.01);
+    // Espectro da fonte de iluminação
+    vec3 I = vec3(1.0, 1.0, 1.0); // PREENCH AQUI o espectro da fonte de luz
+
+    // Espectro da luz ambiente
+    vec3 Ia = vec3(0.0, 0.1, 0.0); // PREENCHA AQUI o espectro da luz ambiente
+
+    // Equação de Iluminação lambert
+    vec3 lambert_diffuse_term = Kd * I * max(0,dot(n,l));
+
+    // Termo ambiente
+    vec3 ambient_term = Ka*Ia; // PREENCHA AQUI o termo ambiente
+
+    // Termo especular utilizando o modelo de iluminação de Phong
+    vec3 phong_specular_term  = Ks * I * pow(max(0, dot(n, h)), q); // PREENCH AQUI o termo especular de Phong
+
+    //Bota a Blinn-Phong Illumination nas chaves
+    if( object_id == CHAVE_VERMELHA || object_id == CHAVE_AZUL || object_id == CHAVE_VERDE
+        || object_id == TESTE)
+    {
+        color = lambert_diffuse_term  + ambient_term + phong_specular_term;
     }
-    else if ( object_id == COW ){
-        color = Kd3 * (lambert + 0.01);
-    }
-    else if ( object_id == WALL ){
-        color = Kd4 * (lambert + 0.01);
-    }
-    else if ( object_id == WALL_INTERNA ){
-        color = Kd5 * (lambert + 0.05);
-    }
-    else if ( object_id == CHAVE_AZUL ){
-        color = Kd8 * (lambert + 0.01);
-    }
-    else if ( object_id == CHAVE_VERDE ){
-        color = Kd6 * (lambert + 0.01);
-    }
-    else if ( object_id == CHAVE_VERMELHA ){
-        color = Kd7 * (lambert + 0.01);
-    }
-    else if ( object_id == PORTA ){
-        color = Kd6 * (lambert + 0.05);
+    else
+    {
+        color = lambert_diffuse_term;
     }
 
     // Cor final com correção gamma, considerando monitor sRGB.
     // Veja https://en.wikipedia.org/w/index.php?title=Gamma_correction&oldid=751281772#Windows.2C_Mac.2C_sRGB_and_TV.2Fvideo_standard_gammas
     color = pow(color, vec3(1.0,1.0,1.0)/2.2);
-}
 
+   if (object_id == COW){
+        color = color_cow;
+   }
+}
