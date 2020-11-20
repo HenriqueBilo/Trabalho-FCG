@@ -399,20 +399,20 @@ int main(int argc, char* argv[])
     CreateWalls(walls);
 
     // Paredes internas
-    // std::vector<Wall> internalWalls;
-    // CreateInternalWalls(internalWalls);
+    std::vector<Wall> internalWalls;
+    CreateInternalWalls(internalWalls);
 
     // Chaves
 //    std::vector<Key> keys;
 
-    std::vector<AABB> wall_colliders;
+    std::vector<AABB> box_colliders;
     for (auto wall : walls) {
-            wall_colliders.push_back(wall.box_collider);
+            box_colliders.push_back(wall.box_collider);
     }
 
-    // for(auto internalWall : internalWalls){
-    //         wall_colliders.push_back(internalWall.box_collider);
-    // }
+    for(auto internalWall : internalWalls){
+            box_colliders.push_back(internalWall.box_collider);
+    }
 
     // SONS
     //sndPlaySound("../../media/shrek.wav", SND_ASYNC);
@@ -477,20 +477,30 @@ int main(int argc, char* argv[])
 
         // Definicao da camera
         if (g_UseFirstPersonCamera) {
-            //camera_position_c  = g_PlayerPosition + glm::vec4(0.0f,1.0f,0.0f,0.0f);
             camera_position_c  = player.position + glm::vec4(0.0f,1.0f,0.0f,0.0f);
             camera_view_vector = -glm::vec4(x,y,z,0.0f);
         }
         else {
-            //camera_position_c  = g_PlayerPosition + glm::vec4(x,y,z,0.0f);
-            //camera_lookat_l    = g_PlayerPosition;
-
-            //camera_position_c  = g_PlayerPosition + glm::vec4(x,y+1.0f,z,0.0f);
-            //camera_lookat_l    = g_PlayerPosition + glm::vec4(0.0f,1.0f,0.0f,0.0f);
             camera_position_c  = player.position + glm::vec4(x,y+1.0f,z,0.0f);
             camera_lookat_l    = player.position + glm::vec4(0.0f,1.0f,0.0f,0.0f);
-            camera_view_vector = camera_lookat_l - camera_position_c;
+            camera_view_vector = glm::vec4(0.0f,0.0f,0.0f,0.0f);
 
+            // controlar a posicao da camera para nao atravessar paredes
+            float precision = 25.0f;
+            glm::vec4 view_direction = (camera_lookat_l - camera_position_c) / precision;
+
+            bool camera_collision = false;
+
+            for (float i = 1.0f; i <= precision && !camera_collision; i += 1.0f){
+                for ( auto box : box_colliders ){
+                    if (Point2BoxCollision( camera_lookat_l - i*view_direction , box )) {
+                        camera_collision = true;
+                        break;
+                    }
+                }
+                if (!camera_collision) camera_view_vector += view_direction;
+            }
+            camera_position_c = camera_lookat_l - camera_view_vector;
         }
 
         glm::vec4 camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
@@ -509,19 +519,19 @@ int main(int argc, char* argv[])
 
         // movimentação do personagem
         if (g_WKeyPressed){
-                player.move( camera_forward_vector, wall_colliders );
+                player.move( camera_forward_vector, box_colliders );
         }
 
         if (g_AKeyPressed){
-                player.move( -camera_right_vector, wall_colliders );
+                player.move( -camera_right_vector, box_colliders );
         }
 
         if (g_SKeyPressed){
-                player.move( -camera_forward_vector, wall_colliders );
+                player.move( -camera_forward_vector, box_colliders );
         }
 
         if (g_DKeyPressed){
-                player.move( camera_right_vector, wall_colliders );
+                player.move( camera_right_vector, box_colliders );
         }
 
         // Agora computamos a matriz de Projeção.
@@ -673,9 +683,9 @@ int main(int argc, char* argv[])
             DrawWall(wall);
         }
 
-        // for(auto wall : internalWalls){
-        //     DrawInternalWall(wall);
-        // }
+        for(auto wall : internalWalls){
+            DrawInternalWall(wall);
+        }
 
 
         // Pegamos um vértice com coordenadas de modelo (0.5, 0.5, 0.5, 1) e o
