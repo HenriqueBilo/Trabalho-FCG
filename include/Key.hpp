@@ -12,6 +12,7 @@ class Key
 public:
     glm::vec4 center;
     Sphere sphere_collider;
+    bool collected;
 
     // Constructor
     Key();
