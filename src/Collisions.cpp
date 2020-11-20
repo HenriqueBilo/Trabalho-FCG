@@ -25,11 +25,11 @@ bool Box2SphereCollision(AABB box, Sphere sphere){
 
 bool Sphere2SphereCollision(Sphere a, Sphere b){
     float distance = std::sqrt(
-                            (b.center.x - a.center.x)
+                            (b.center.x - a.center.x) * (b.center.x - a.center.x)
                             +
-                            (b.center.y - a.center.y)
+                            (b.center.y - a.center.y) * (b.center.y - a.center.y)
                             +
-                            (b.center.z - a.center.z)
+                            (b.center.z - a.center.z) * (b.center.z - a.center.z)
     ); 
 
     return distance < (a.radius + b.radius);
