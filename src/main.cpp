@@ -352,11 +352,6 @@ int main(int argc, char* argv[])
     ComputeNormals(&chavemodel);
     BuildTrianglesAndAddToVirtualScene(&chavemodel);
 
-    //PORTA
-    ObjModel portamodel("../../data/door.obj");
-    ComputeNormals(&portamodel);
-    BuildTrianglesAndAddToVirtualScene(&portamodel);
-
     //CERCA
     ObjModel fencemodel("../../data/fence.obj");
     ComputeNormals(&fencemodel);
@@ -561,14 +556,13 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
 
         #define CHAVE_VERDE 0
-        #define BUNNY  1
+        #define PERSONAGEM  1
         #define PLANE  2
         #define CHAVE_AZUL 3
         #define COW 4
         #define WALL 5
         #define WALL_INTERNA 6
         #define CHAVE_VERMELHA 7
-        #define PORTA 8
         #define CERCA 9
 
         // calculo da curva de bezier sobre o tempo
@@ -604,7 +598,7 @@ int main(int argc, char* argv[])
             modelBunny = Matrix_Translate(player.position.x,player.position.y ,player.position.z)
             * Matrix_Rotate_Y( g_CameraTheta - M_PI/2 + animation_coeficient );
             glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(modelBunny));
-            glUniform1i(object_id_uniform, BUNNY);
+            glUniform1i(object_id_uniform, PERSONAGEM);
             DrawVirtualObject("bunny");
         }
 
@@ -663,14 +657,6 @@ int main(int argc, char* argv[])
             DrawVirtualObject("key");
         }
 
-        // Desenhamos o modelo da porta
-        model = Matrix_Translate(17.5f,0.0f,11.0f)
-                * Matrix_Rotate_Y(4.72f)
-                * Matrix_Scale(0.5f,1.0f,1.5f);
-        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(object_id_uniform, PORTA);
-        DrawVirtualObject("door");
-
         for (auto wall : outer_walls) {
             DrawWall(wall, WALL);
         }
@@ -724,7 +710,7 @@ int main(int argc, char* argv[])
 
 void DrawFences(Fence fence, int object_id)
 {
-    glm::mat4 model = Matrix_Translate(fence.center.x, fence.center.y-3, fence.center.z)
+    glm::mat4 model = Matrix_Translate(fence.center.x, fence.center.y-0.5, fence.center.z)
                     * Matrix_Scale(0.50f,0.50f,0.50f);
 
     if(fence.perpendicular){
@@ -739,24 +725,24 @@ void DrawFences(Fence fence, int object_id)
 void CreateFences(std::vector<Fence> &fences)
 {
     //Frente da vaca
-    fences.push_back(Fence(glm::vec4( 3.77f,g_FloorLevel, 2.80f, 1.0f), 10, 6, 1, true));
-    fences.push_back(Fence(glm::vec4( 3.77f,g_FloorLevel, -0.30f, 1.0f), 10, 6, 1, true));
-    fences.push_back(Fence(glm::vec4( 3.77f,g_FloorLevel, -3.40f, 1.0f), 10, 6, 1, true));
+    fences.push_back(Fence(glm::vec4( 3.77f,g_FloorLevel, 2.80f, 1.0f), 2.5, 1, 0.3, true));
+    fences.push_back(Fence(glm::vec4( 3.77f,g_FloorLevel, -0.30f, 1.0f), 2.5, 1, 0.3, true));
+    fences.push_back(Fence(glm::vec4( 3.77f,g_FloorLevel, -3.40f, 1.0f), 2.5, 1, 0.3, true));
 
     //Esquerda da vaca
-    fences.push_back(Fence(glm::vec4( 2.10f,g_FloorLevel, -5.00f, 1.0f), 10, 6, 1, false));
-    fences.push_back(Fence(glm::vec4( -1.00f,g_FloorLevel, -5.00f, 1.0f), 10, 6, 1, false));
-    fences.push_back(Fence(glm::vec4( -4.10f,g_FloorLevel, -5.00f, 1.0f), 10, 6, 1, false));
+    fences.push_back(Fence(glm::vec4( 2.10f,g_FloorLevel, -5.00f, 1.0f), 2.5, 1, 0.3, false));
+    fences.push_back(Fence(glm::vec4( -1.00f,g_FloorLevel, -5.00f, 1.0f), 2.5, 1, 0.3, false));
+    fences.push_back(Fence(glm::vec4( -4.10f,g_FloorLevel, -5.00f, 1.0f), 2.5, 1, 0.3, false));
 
     //Atras da vaca
-    fences.push_back(Fence(glm::vec4( -5.77f,g_FloorLevel, -3.40f, 1.0f), 10, 6, 1, true));
-    fences.push_back(Fence(glm::vec4( -5.77f,g_FloorLevel, -0.30f, 1.0f), 10, 6, 1, true));
-    fences.push_back(Fence(glm::vec4( -5.77f,g_FloorLevel, 2.80f, 1.0f), 10, 6, 1, true));
+    fences.push_back(Fence(glm::vec4( -5.77f,g_FloorLevel, -3.40f, 1.0f), 2.5, 1, 0.3, true));
+    fences.push_back(Fence(glm::vec4( -5.77f,g_FloorLevel, -0.30f, 1.0f), 2.5, 1, 0.3, true));
+    fences.push_back(Fence(glm::vec4( -5.77f,g_FloorLevel, 2.80f, 1.0f), 2.5, 1, 0.3, true));
 
     //Lado direito da vaca
-    fences.push_back(Fence(glm::vec4( 2.10f,g_FloorLevel, 4.40f, 1.0f), 10, 6, 1, false));
-    fences.push_back(Fence(glm::vec4( -1.00f,g_FloorLevel, 4.40f, 1.0f), 10, 6, 1, false));
-    fences.push_back(Fence(glm::vec4( -4.10f,g_FloorLevel, 4.40f, 1.0f), 10, 6, 1, false));
+    fences.push_back(Fence(glm::vec4( 2.10f,g_FloorLevel, 4.40f, 1.0f), 2, 1, 0.3, false));
+    fences.push_back(Fence(glm::vec4( -1.00f,g_FloorLevel, 4.40f, 1.0f), 2, 1, 0.3, false));
+    fences.push_back(Fence(glm::vec4( -4.10f,g_FloorLevel, 4.40f, 1.0f), 2, 1, 0.3, false));
 }
 
 void DrawWall(Wall wall, int object_id){

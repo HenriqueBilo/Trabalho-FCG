@@ -22,16 +22,14 @@ uniform mat4 projection;
 
 // Identificador que define qual objeto está sendo desenhado no momento
 #define CHAVE_VERDE 0
-#define BUNNY  1
+#define PERSONAGEM 1
 #define PLANE  2
 #define CHAVE_AZUL 3
 #define COW 4
 #define WALL 5
 #define WALL_INTERNA 6
 #define CHAVE_VERMELHA 7
-#define PORTA 8
 #define CERCA 9
-#define PERSONAGEM 10
 
 uniform int object_id;
 
@@ -99,7 +97,7 @@ void main()
     float U = 0.0;
     float V = 0.0;
 
-    if ( object_id == BUNNY )
+    if ( object_id == PERSONAGEM )
     {
         float minx = bbox_min.x;
         float maxx = bbox_max.x;
@@ -172,22 +170,6 @@ void main()
         Ka = vec3(0.2, 0.3, 1.0);
         q = 20.0;
     }
-    else if( object_id == PORTA )
-    {
-        vec4 bbox_center = (bbox_min + bbox_max) / 2.0;
-
-        vec4 formula_p_linha = bbox_center + normalize(position_model - bbox_center);
-        vec4 p = formula_p_linha - bbox_center;
-
-        //Obtemos os ângulos
-        float teta = atan(p.x, p.z);
-        float phi = asin(p.y);
-
-        U = (teta + M_PI) / (2*M_PI);
-        V = (phi + M_PI_2) / M_PI;
-
-        Kd = vec3(0.543,0.27,0.074);
-    }
     else if( object_id == CERCA)
     {
         float minx = bbox_min.x;
@@ -204,24 +186,7 @@ void main()
 
         Kd = texture(TextureImage0, vec2(U,V)).rgb;
     }
-    else if( object_id == PERSONAGEM)
-    {
-        /*float minx = bbox_min.x;
-        float maxx = bbox_max.x;
-
-        float miny = bbox_min.y;
-        float maxy = bbox_max.y;
-
-        float minz = bbox_min.z;
-        float maxz = bbox_max.z;
-
-        U = (position_model.x - minx) / (maxx - minx);
-        V = (position_model.y - miny) / (maxy - miny);
-
-        Kd = texture(TextureImage0, vec2(U,V)).rgb;*/
-
-        Kd = texture(TextureImage1, texcoords).rgb;
-    }
+    
     // Espectro da fonte de iluminação
     vec3 I = vec3(1.0, 1.0, 1.0); // PREENCH AQUI o espectro da fonte de luz
 
