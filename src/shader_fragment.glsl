@@ -30,7 +30,8 @@ uniform mat4 projection;
 #define WALL_INTERNA 6
 #define CHAVE_VERMELHA 7
 #define PORTA 8
-#define TESTE 9
+#define CERCA 9
+#define PERSONAGEM 10
 
 uniform int object_id;
 
@@ -98,34 +99,6 @@ void main()
     float U = 0.0;
     float V = 0.0;
 
-    /*if ( object_id == SPHERE )
-    {
-        // PREENCHA AQUI as coordenadas de textura da esfera, computadas com
-        // projeção esférica EM COORDENADAS DO MODELO. Utilize como referência
-        // o slides 134-150 do documento Aula_20_Mapeamento_de_Texturas.pdf.
-        // A esfera que define a projeção deve estar centrada na posição
-        // "bbox_center" definida abaixo.
-
-        // Você deve utilizar:
-        //   função 'length( )' : comprimento Euclidiano de um vetor
-        //   função 'atan( , )' : arcotangente. Veja https://en.wikipedia.org/wiki/Atan2.
-        //   função 'asin( )'   : seno inverso.
-        //   constante M_PI
-        //   variável position_model
-
-        //bbox_center seria o 'c' da fórmula
-        vec4 bbox_center = (bbox_min + bbox_max) / 2.0;
-
-        vec4 formula_p_linha = bbox_center + normalize(position_model - bbox_center);
-        vec4 p = formula_p_linha - bbox_center;
-
-        //Obtemos os ângulos
-        float teta = atan(p.x, p.z);
-        float phi = asin(p.y);
-
-        U = (teta + M_PI) / (2*M_PI);
-        V = (phi + M_PI_2) / M_PI;
-    }*/
     if ( object_id == BUNNY )
     {
         float minx = bbox_min.x;
@@ -146,22 +119,6 @@ void main()
     {
         Kd = texture(TextureImage2, texcoords).rgb;
     }
-    /*else if( object_id == COW)
-    {
-        vec4 bbox_center = (bbox_min + bbox_max) / 2.0;
-
-        vec4 formula_p_linha = bbox_center + normalize(position_model - bbox_center);
-        vec4 p = formula_p_linha - bbox_center;
-
-        //Obtemos os ângulos
-        float teta = atan(p.x, p.z);
-        float phi = asin(p.y);
-
-        U = (teta + M_PI) / (2*M_PI);
-        V = (phi + M_PI_2) / M_PI;
-
-        Kd = texture(TextureImage3, vec2(U,V)).rgb;
-    }*/
     else if( object_id == WALL)
     {
         float minx = bbox_min.x;
@@ -231,21 +188,39 @@ void main()
 
         Kd = vec3(0.543,0.27,0.074);
     }
-    else if( object_id == TESTE)
+    else if( object_id == CERCA)
     {
-        vec4 bbox_center = (bbox_min + bbox_max) / 2.0;
+        float minx = bbox_min.x;
+        float maxx = bbox_max.x;
 
-        vec4 formula_p_linha = bbox_center + normalize(position_model - bbox_center);
-        vec4 p = formula_p_linha - bbox_center;
+        float miny = bbox_min.y;
+        float maxy = bbox_max.y;
 
-        //Obtemos os ângulos
-        float teta = atan(p.x, p.z);
-        float phi = asin(p.y);
+        float minz = bbox_min.z;
+        float maxz = bbox_max.z;
 
-        U = (teta + M_PI) / (2*M_PI);
-        V = (phi + M_PI_2) / M_PI;
+        U = (position_model.x - minx) / (maxx - minx);
+        V = (position_model.y - miny) / (maxy - miny);
 
-        Kd = texture(TextureImage3, vec2(U,V)).rgb;
+        Kd = texture(TextureImage0, vec2(U,V)).rgb;
+    }
+    else if( object_id == PERSONAGEM)
+    {
+        /*float minx = bbox_min.x;
+        float maxx = bbox_max.x;
+
+        float miny = bbox_min.y;
+        float maxy = bbox_max.y;
+
+        float minz = bbox_min.z;
+        float maxz = bbox_max.z;
+
+        U = (position_model.x - minx) / (maxx - minx);
+        V = (position_model.y - miny) / (maxy - miny);
+
+        Kd = texture(TextureImage0, vec2(U,V)).rgb;*/
+
+        Kd = texture(TextureImage1, texcoords).rgb;
     }
     // Espectro da fonte de iluminação
     vec3 I = vec3(1.0, 1.0, 1.0); // PREENCH AQUI o espectro da fonte de luz
@@ -263,8 +238,7 @@ void main()
     vec3 phong_specular_term  = Ks * I * pow(max(0, dot(n, h)), q); // PREENCH AQUI o termo especular de Phong
 
     //Bota a Blinn-Phong Illumination nas chaves
-    if( object_id == CHAVE_VERMELHA || object_id == CHAVE_AZUL || object_id == CHAVE_VERDE
-        || object_id == TESTE)
+    if( object_id == CHAVE_VERMELHA || object_id == CHAVE_AZUL || object_id == CHAVE_VERDE)
     {
         color = lambert_diffuse_term  + ambient_term + phong_specular_term;
     }

@@ -54,6 +54,7 @@
 #include "AABB.hpp"
 #include "Wall.hpp"
 #include "Key.hpp"
+#include "Fence.hpp"
 
 // Constantes
 #define M_PI   3.14159265358979323846
@@ -134,9 +135,11 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 
 // Funcoes para desenhar os objetos do jogo
 void DrawWall(Wall wall, int object_id);
+void DrawFences(Fence fence, int object_id);
 
 // Funcoes de instanciacao de objetos
 void CreateWalls(std::vector<Wall> &outer_walls, std::vector<Wall> &inner_walls);
+void CreateFences(std::vector<Fence> &fences);
 
 // Funcoes para curvas de bezier cubicas parametricas
 float B03( float t );
@@ -238,8 +241,7 @@ GLint bbox_max_uniform;
 // Número de texturas carregadas pela função LoadTextureImage()
 GLuint g_NumLoadedTextures = 0;
 
-//#include <Windows.h>
-//#include <MMSystem.h>
+#include <MMSystem.h>
 
 int main(int argc, char* argv[])
 {
@@ -315,7 +317,7 @@ int main(int argc, char* argv[])
     LoadShadersFromFiles();
 
     // Carregamos duas imagens para serem utilizadas como textura
-    LoadTextureImage("../../data/pixar.png");      // TextureImage0
+    LoadTextureImage("../../data/cerca.jpg");      // TextureImage0
     LoadTextureImage("../../data/fur.jpg"); // TextureImage1
     LoadTextureImage("../../data/grass.jpg"); // TextureImage2
     LoadTextureImage("../../data/cow-texture.jpg"); // TextureImage3
@@ -355,6 +357,11 @@ int main(int argc, char* argv[])
     ComputeNormals(&portamodel);
     BuildTrianglesAndAddToVirtualScene(&portamodel);
 
+    //CERCA
+    ObjModel fencemodel("../../data/fence.obj");
+    ComputeNormals(&fencemodel);
+    BuildTrianglesAndAddToVirtualScene(&fencemodel);
+
     if ( argc > 1 )
     {
         ObjModel model(argv[1]);
@@ -382,7 +389,9 @@ int main(int argc, char* argv[])
     Player player(g_PlayerSpawnPoint, 1.0f, g_MovementSpeed);
     std::vector<Wall> outer_walls;
     std::vector<Wall> inner_walls;
-    CreateWalls(outer_walls, inner_walls);    
+    CreateWalls(outer_walls, inner_walls);
+    std::vector<Fence> fences;
+    CreateFences(fences);
     Key red_key(glm::vec4(3.0f,1.0f,-15.0f,1.0f));
     Key green_key(glm::vec4(-18.0f,1.0f,18.0f,1.0f));
     Key blue_key(glm::vec4(10.0f,1.0f,18.0f,1.0f));
@@ -395,10 +404,12 @@ int main(int argc, char* argv[])
     for (auto wall : inner_walls) {
             box_colliders.push_back(wall.box_collider);
     }
+    for(auto fence: fences) {
+            box_colliders.push_back(fence.box_collider);
+    }
 
     // SONS
     //sndPlaySound("../../media/shrek.wav", SND_ASYNC);
-    //sndPlaySound("../../media/chave.wav", SND_ASYNC);
 
     // Ficamos em loop, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
@@ -558,7 +569,7 @@ int main(int argc, char* argv[])
         #define WALL_INTERNA 6
         #define CHAVE_VERMELHA 7
         #define PORTA 8
-        #define TESTE 9
+        #define CERCA 9
 
         // calculo da curva de bezier sobre o tempo
         glm::vec4 p0 = glm::vec4(-0.1f,-0.1f,-0.1f, 1.0f);
@@ -606,7 +617,7 @@ int main(int argc, char* argv[])
         // Desenhamos o modelo da vaca
         modelCow = Matrix_Translate(0.0f,0.0f, 0.0f)
                  * Matrix_Scale( g_1KeyPressed ? 1.0f : 2.0f,
-                                 g_2KeyPressed ? 1.0f : 2.0f, 
+                                 g_2KeyPressed ? 1.0f : 2.0f,
                                  g_3KeyPressed ? 1.0f : 2.0f );
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(modelCow));
         glUniform1i(object_id_uniform, COW);
@@ -625,6 +636,7 @@ int main(int argc, char* argv[])
             glUniform1i(object_id_uniform, CHAVE_VERDE);
             DrawVirtualObject("key");
         }
+
         if(!blue_key.collected)
         {
             modelChaveAzul = Matrix_Translate(  blue_key.sphere_collider.center.x,
@@ -637,6 +649,7 @@ int main(int argc, char* argv[])
             glUniform1i(object_id_uniform, CHAVE_AZUL);
             DrawVirtualObject("key");
         }
+
         if(!red_key.collected)
         {
             modelChaveVermelha = Matrix_Translate(  red_key.sphere_collider.center.x,
@@ -664,7 +677,9 @@ int main(int argc, char* argv[])
         for (auto wall : inner_walls) {
             DrawWall(wall, WALL_INTERNA);
         }
-
+        for (auto fence: fences){
+            DrawFences(fence, CERCA);
+        }
 
         // Pegamos um vértice com coordenadas de modelo (0.5, 0.5, 0.5, 1) e o
         // passamos por todos os sistemas de coordenadas armazenados nas
@@ -705,6 +720,43 @@ int main(int argc, char* argv[])
 
     // Fim do programa
     return 0;
+}
+
+void DrawFences(Fence fence, int object_id)
+{
+    glm::mat4 model = Matrix_Translate(fence.center.x, fence.center.y-3, fence.center.z)
+                    * Matrix_Scale(0.50f,0.50f,0.50f);
+
+    if(fence.perpendicular){
+        model = model * Matrix_Rotate_Y( M_PI / 2.0f );
+    }
+
+    glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+    glUniform1i(object_id_uniform, object_id); // CERCA
+    DrawVirtualObject("fence");
+}
+
+void CreateFences(std::vector<Fence> &fences)
+{
+    //Frente da vaca
+    fences.push_back(Fence(glm::vec4( 3.77f,g_FloorLevel, 2.80f, 1.0f), 10, 6, 1, true));
+    fences.push_back(Fence(glm::vec4( 3.77f,g_FloorLevel, -0.30f, 1.0f), 10, 6, 1, true));
+    fences.push_back(Fence(glm::vec4( 3.77f,g_FloorLevel, -3.40f, 1.0f), 10, 6, 1, true));
+
+    //Esquerda da vaca
+    fences.push_back(Fence(glm::vec4( 2.10f,g_FloorLevel, -5.00f, 1.0f), 10, 6, 1, false));
+    fences.push_back(Fence(glm::vec4( -1.00f,g_FloorLevel, -5.00f, 1.0f), 10, 6, 1, false));
+    fences.push_back(Fence(glm::vec4( -4.10f,g_FloorLevel, -5.00f, 1.0f), 10, 6, 1, false));
+
+    //Atras da vaca
+    fences.push_back(Fence(glm::vec4( -5.77f,g_FloorLevel, -3.40f, 1.0f), 10, 6, 1, true));
+    fences.push_back(Fence(glm::vec4( -5.77f,g_FloorLevel, -0.30f, 1.0f), 10, 6, 1, true));
+    fences.push_back(Fence(glm::vec4( -5.77f,g_FloorLevel, 2.80f, 1.0f), 10, 6, 1, true));
+
+    //Lado direito da vaca
+    fences.push_back(Fence(glm::vec4( 2.10f,g_FloorLevel, 4.40f, 1.0f), 10, 6, 1, false));
+    fences.push_back(Fence(glm::vec4( -1.00f,g_FloorLevel, 4.40f, 1.0f), 10, 6, 1, false));
+    fences.push_back(Fence(glm::vec4( -4.10f,g_FloorLevel, 4.40f, 1.0f), 10, 6, 1, false));
 }
 
 void DrawWall(Wall wall, int object_id){

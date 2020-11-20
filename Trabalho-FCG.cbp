@@ -100,6 +100,7 @@
 		</Linker>
 		<Unit filename="include/AABB.hpp" />
 		<Unit filename="include/Collisions.hpp" />
+		<Unit filename="include/Fence.hpp" />
 		<Unit filename="include/GLFW/glfw3.h" />
 		<Unit filename="include/GLFW/glfw3native.h" />
 		<Unit filename="include/KHR/khrplatform.h" />
@@ -377,6 +378,7 @@
 		<Unit filename="include/utils.h" />
 		<Unit filename="src/AABB.cpp" />
 		<Unit filename="src/Collisions.cpp" />
+		<Unit filename="src/Fence.cpp" />
 		<Unit filename="src/Key.cpp" />
 		<Unit filename="src/Player.cpp" />
 		<Unit filename="src/Sphere.cpp" />
