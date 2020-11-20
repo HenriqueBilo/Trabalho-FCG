@@ -229,7 +229,7 @@ void main()
         U = (teta + M_PI) / (2*M_PI);
         V = (phi + M_PI_2) / M_PI;
 
-        Kd = texture(TextureImage6, vec2(U,V)).rgb;
+        Kd = vec3(0.543,0.27,0.074);
     }
     else if( object_id == TESTE)
     {

@@ -966,7 +966,7 @@
 	<inttypes.h>
 	<stdint.h>
 
-1605822532 source:c:\users\guilh\desktop\files\ufrgs\etapa 5\fcg\trabalho-fcg\src\main.cpp
+1605842784 source:c:\users\guilh\desktop\files\ufrgs\etapa 5\fcg\trabalho-fcg\src\main.cpp
 	<cmath>
 	<cstdio>
 	<cstdlib>
@@ -993,8 +993,6 @@
 	"Player.hpp"
 	"AABB.hpp"
 	"Wall.hpp"
-	<Windows.h>
-	<MMSystem.h>
 
 1604539978 c:\users\guilh\desktop\files\ufrgs\etapa 5\fcg\trabalho-fcg\include\glfw\glfw3.h
 	<stddef.h>
@@ -3819,10 +3817,10 @@
 	"Collisions.hpp"
 	<cmath>
 
-1605742135 source:c:\users\guilh\desktop\files\ufrgs\etapa 5\fcg\trabalho-fcg\src\wall.cpp
+1605842928 source:c:\users\guilh\desktop\files\ufrgs\etapa 5\fcg\trabalho-fcg\src\wall.cpp
 	"Wall.hpp"
 
-1605742135 c:\users\guilh\desktop\files\ufrgs\etapa 5\fcg\trabalho-fcg\include\wall.hpp
+1605842968 c:\users\guilh\desktop\files\ufrgs\etapa 5\fcg\trabalho-fcg\include\wall.hpp
 	<iostream>
 	<glm/vec4.hpp>
 	"AABB.hpp"

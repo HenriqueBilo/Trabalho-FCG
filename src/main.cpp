@@ -51,9 +51,9 @@
 
 #include "Collisions.hpp"
 #include "Player.hpp"
-//#include "Sphere.hpp"
 #include "AABB.hpp"
 #include "Wall.hpp"
+#include "Key.hpp"
 
 // Constantes
 #define M_PI   3.14159265358979323846
@@ -133,12 +133,10 @@ void CursorPosCallback(GLFWwindow* window, double xpos, double ypos);
 void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 
 // Funcoes para desenhar os objetos do jogo
-void DrawWall(Wall wall);
-void DrawInternalWall(Wall internalWall);
+void DrawWall(Wall wall, int object_id);
 
 // Funcoes de instanciacao de objetos
-void CreateWalls(std::vector<Wall> &walls);
-void CreateInternalWalls(std::vector<Wall> &walls);
+void CreateWalls(std::vector<Wall> &outer_walls, std::vector<Wall> &inner_walls);
 
 // Funcoes para curvas de bezier cubicas parametricas
 float B03( float t );
@@ -180,7 +178,7 @@ float g_AngleY = 0.0f;
 float g_AngleZ = 0.0f;
 
 // Variaveis globais de controle do jogo
-glm::vec4 g_PlayerPosition = glm::vec4(-17.54f,0.0f,16.20f,1.0f);
+glm::vec4 g_PlayerPosition = glm::vec4(-18.0f,0.0f,-18.0f,1.0f);
 float g_MovementSpeed = 0.05f;
 
 float g_FloorLevel = -1.1f;
@@ -208,8 +206,8 @@ bool g_MiddleMouseButtonPressed = false; // Análogo para botão do meio do mous
 // efetiva da câmera é calculada dentro da função main(), dentro do loop de
 // renderização.
 float g_CameraTheta = 0.0f; // Ângulo no plano ZX em relação ao eixo Z
-float g_CameraPhi = 0.0f;   // Ângulo em relação ao eixo Y
-float g_CameraDistance = 3.5f; // Distância da câmera para a origem
+float g_CameraPhi = 0;   // Ângulo em relação ao eixo Y
+float g_CameraDistance = 0; // Distância da câmera para a origem
 
 // Variáveis que controlam rotação do antebraço
 float g_ForearmAngleZ = 0.0f;
@@ -239,8 +237,8 @@ GLint bbox_max_uniform;
 // Número de texturas carregadas pela função LoadTextureImage()
 GLuint g_NumLoadedTextures = 0;
 
-#include <Windows.h>
-#include <MMSystem.h>
+//#include <Windows.h>
+//#include <MMSystem.h>
 
 int main(int argc, char* argv[])
 {
@@ -390,25 +388,25 @@ int main(int argc, char* argv[])
 
     // Inicializacao das classes do jogo
     Player player(g_PlayerPosition, 1.0f, g_MovementSpeed);
+    Key red_key(glm::vec4(0.0f,0.0f,0.0f));
+    Key green_key(glm::vec4(0.0f,0.0f,0.0f));
+    Key blue_key(glm::vec4(0.0f,0.0f,0.0f));
 
     // Paredes externas
-    std::vector<Wall> walls;
-    CreateWalls(walls);
-
-    // Paredes internas
-    std::vector<Wall> internalWalls;
-    CreateInternalWalls(internalWalls);
+    std::vector<Wall> outer_walls;
+    std::vector<Wall> inner_walls;
+    CreateWalls(outer_walls, inner_walls);
 
     // Chaves
 //    std::vector<Key> keys;
 
+    // Popular o vetor de colliders
     std::vector<AABB> box_colliders;
-    for (auto wall : walls) {
+    for (auto wall : outer_walls) {
             box_colliders.push_back(wall.box_collider);
     }
-
-    for(auto internalWall : internalWalls){
-            box_colliders.push_back(internalWall.box_collider);
+    for (auto wall : inner_walls) {
+            box_colliders.push_back(wall.box_collider);
     }
 
     // SONS
@@ -454,7 +452,7 @@ int main(int argc, char* argv[])
         float phimax = M_PI/2 - 0.01f;
         float phimin = g_UseFirstPersonCamera ? -phimax : 0;
         float distmin = 2 * player.sphere_collider.radius;
-        float distmax = 4 * player.sphere_collider.radius;
+        float distmax = 50 * player.sphere_collider.radius;
 
         if (g_CameraDistance < distmin) g_CameraDistance = distmin;
         if (g_CameraDistance > distmax) g_CameraDistance = distmax;
@@ -610,10 +608,10 @@ int main(int argc, char* argv[])
         DrawVirtualObject("plane");
 
         // Desenhamos o modelo da vaca
-        modelCow = Matrix_Translate(-14.54f,0.0f,-2.15f)
-                 * Matrix_Scale( g_1KeyPressed ? 2.0f : 1.0f,
-                                 g_2KeyPressed ? 2.0f : 1.0f, 
-                                 g_3KeyPressed ? 2.0f : 1.0f );
+        modelCow = Matrix_Translate(0.0f,0.0f, 0.0f)
+                 * Matrix_Scale( g_1KeyPressed ? 1.0f : 2.0f,
+                                 g_2KeyPressed ? 1.0f : 2.0f, 
+                                 g_3KeyPressed ? 1.0f : 2.0f );
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(modelCow));
         glUniform1i(object_id_uniform, COW);
         DrawVirtualObject("cow");
@@ -630,7 +628,7 @@ int main(int argc, char* argv[])
         if(!colisaoChaveVerde)
         {
             modelChaveVerde = Matrix_Translate(bezier_curve_point.x,bezier_curve_point.y,bezier_curve_point.z)
-                            * Matrix_Translate(-3.55f,1.0f,-1.17f)
+                            * Matrix_Translate(-18.0f,1.0f,18.0f)
                             * Matrix_Rotate_Z(-4.72f)
                             * Matrix_Rotate_X((float)glfwGetTime())
                             * Matrix_Scale(0.25f,0.25f,0.25f);
@@ -645,7 +643,7 @@ int main(int argc, char* argv[])
             // Desenhamos o modelo da chave azul
             //model = Matrix_Translate(8.15f,1.0f,17.49f)
             modelChaveAzul = Matrix_Translate(bezier_curve_point.x,bezier_curve_point.y,bezier_curve_point.z)
-                           * Matrix_Translate(8.15f,1.0f,17.49f)
+                           * Matrix_Translate(10.0f,1.0f,18.0f)
                            * Matrix_Rotate_Z(-4.72f)
                            * Matrix_Rotate_X((float)glfwGetTime())
                            * Matrix_Scale(0.25f,0.25f,0.25f);
@@ -659,7 +657,7 @@ int main(int argc, char* argv[])
         {
             // Desenhamos o modelo da chave vermelha
             modelChaveVermelha = Matrix_Translate(bezier_curve_point.x,bezier_curve_point.y,bezier_curve_point.z)
-                               * Matrix_Translate(2.10f,1.0f,-16.76f)
+                               * Matrix_Translate(3.0f,1.0f,-15.0f)
                                * Matrix_Rotate_Z(-4.72f)
                                * Matrix_Rotate_X((float)glfwGetTime())
                                * Matrix_Scale(0.25f,0.25f,0.25f);
@@ -676,12 +674,11 @@ int main(int argc, char* argv[])
         glUniform1i(object_id_uniform, PORTA);
         DrawVirtualObject("door");
 
-        for (auto wall : walls) {
-            DrawWall(wall);
+        for (auto wall : outer_walls) {
+            DrawWall(wall, WALL);
         }
-
-        for(auto wall : internalWalls){
-            DrawInternalWall(wall);
+        for (auto wall : inner_walls) {
+            DrawWall(wall, WALL_INTERNA);
         }
 
 
@@ -726,7 +723,7 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-void DrawWall(Wall wall){
+void DrawWall(Wall wall, int object_id){
 
     glm::mat4 model = Matrix_Translate(wall.center.x, wall.center.y-3, wall.center.z)
                     * Matrix_Scale(0.50f,0.50f,0.50f);
@@ -736,80 +733,52 @@ void DrawWall(Wall wall){
     }
 
     glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-    glUniform1i(object_id_uniform, WALL);
+    glUniform1i(object_id_uniform, object_id); // WALL_INTERNA ou WALL
     DrawVirtualObject("wall");
 }
 
-void DrawInternalWall(Wall wall){
-
-    glm::mat4 model = Matrix_Translate(wall.center.x, wall.center.y-3, wall.center.z)
-                    * Matrix_Scale(wall.tamanho.x,wall.tamanho.y,wall.tamanho.z);
-
-    if(wall.perpendicular){
-        model = model * Matrix_Rotate_Y( M_PI / 2.0f );
-    }
-
-    glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-    glUniform1i(object_id_uniform, WALL_INTERNA);
-    DrawVirtualObject("wall");
-}
-
-void CreateInternalWalls(std::vector<Wall> &internalWalls)
-{
-    internalWalls.push_back(Wall(glm::vec4(-15.0f,g_FloorLevel, 14.0f, 1.0f), 10, 6, 1, true,  glm::vec4(0.50f,0.50f,0.50f,1.0f)));
-    internalWalls.push_back(Wall( glm::vec4(-13.5f,g_FloorLevel, 8.5f, 1.0f), 5, 6, 1, false, glm::vec4(0.20f,0.50f,0.50f,1.0f)));
-    internalWalls.push_back(Wall( glm::vec4(-11.0f,g_FloorLevel, 6.0f, 1.0f), 6, 6, 1, true, glm::vec4(0.50f,0.50f,0.30f,1.0f) ));
-    internalWalls.push_back(Wall( glm::vec4(-13.0f,g_FloorLevel, 2.8f, 1.0f), 5, 6, 1, false, glm::vec4(0.25f,0.50f,0.40f,1.0f) ));
-    internalWalls.push_back(Wall( glm::vec4(-15.0f,g_FloorLevel, -5.5f, 1.0f), 10, 6, 1, true, glm::vec4(0.50f,0.50f,0.50f,1.0f) ));
-    internalWalls.push_back(Wall( glm::vec4(-15.0f,g_FloorLevel, -12.5f, 1.0f), 5, 6, 1, true, glm::vec4(0.50f,0.50f,0.20f,1.0f) ));
-    internalWalls.push_back(Wall( glm::vec4(-10.5f,g_FloorLevel, -14.5f, 1.0f), 10, 6, 1, false, glm::vec4(0.50f,0.50f,0.50f,1.0f) ));
-    internalWalls.push_back(Wall( glm::vec4(-0.50f,g_FloorLevel, -14.5f, 1.0f), 10, 6, 1, false, glm::vec4(0.50f,0.50f,0.50f,1.0f) ));
-    internalWalls.push_back(Wall( glm::vec4(5.0f,g_FloorLevel, -14.5f, 1.0f), 10, 6, 1, true, glm::vec4(0.50f,0.50f,0.50f,1.0f) ));
-    internalWalls.push_back(Wall( glm::vec4(-6.45f,g_FloorLevel, -9.13f, 1.0f), 15, 6, 1, true, glm::vec4(0.50f,0.50f,0.50f,1.0f) ));
-    internalWalls.push_back(Wall( glm::vec4(-6.45f,g_FloorLevel, -1.63f, 1.0f), 6, 6, 1, true, glm::vec4(0.30f,0.50f,0.50f,1.0f) ));
-    internalWalls.push_back(Wall( glm::vec4(-3.89f,g_FloorLevel, 3.63f, 1.0f), 6, 6, 1, false, glm::vec4(0.30f,0.50f,0.50f,1.0f) ));
-    internalWalls.push_back(Wall( glm::vec4(-0.5f,g_FloorLevel, 1.15f, 1.0f), 15, 6, 1, true, glm::vec4(0.50f,0.50f,0.90f,1.0f) ));
-    internalWalls.push_back(Wall( glm::vec4(-0.42f,g_FloorLevel, 12.60f, 1.0f), 6, 6, 1, true, glm::vec4(0.50f,0.50f,0.30f,1.0f) ));
-    internalWalls.push_back(Wall( glm::vec4(-7.20f,g_FloorLevel, 16.0f, 1.0f), 6, 6, 1, true, glm::vec4(0.50f,0.50f,0.30f,1.0f) ));
-    internalWalls.push_back(Wall( glm::vec4(-10.94f,g_FloorLevel, 11.82f, 1.0f), 7, 6, 1, true, glm::vec4(0.50f,0.50f,0.35f,1.0f) ));
-    internalWalls.push_back(Wall( glm::vec4(-6.35f,g_FloorLevel, 6.0f, 1.0f), 5, 6, 1, true, glm::vec4(0.50f,0.50f,0.20f,1.0f) ));
-    internalWalls.push_back(Wall( glm::vec4(-5.72f,g_FloorLevel, 13.51f, 1.0f), 2, 6, 1, false, glm::vec4(0.15f,0.50f,0.50f,1.0f) ));
-    internalWalls.push_back(Wall( glm::vec4(-10.88f,g_FloorLevel, -5.02f, 1.0f), 6, 6, 1, true, glm::vec4(0.50f,0.50f,0.45f,1.0f) ));
-    internalWalls.push_back(Wall( glm::vec4(-5.88f,g_FloorLevel, -9.80f, 1.0f), 5, 6, 1, false, glm::vec4(0.50f,0.50f,0.25f,1.0f) ));
-    internalWalls.push_back(Wall( glm::vec4(6.37f,g_FloorLevel, 16.20f, 1.0f), 6, 6, 1, true, glm::vec4(0.50f,0.50f,0.30f,1.0f) ));
-    internalWalls.push_back(Wall( glm::vec4(4.5f,g_FloorLevel, 10.25f, 1.0f), 10, 6, 1, false, glm::vec4(0.50f,0.50f,0.50f,1.0f) ));
-    internalWalls.push_back(Wall( glm::vec4(9.25f,g_FloorLevel, -3.55f, 1.0f), 10, 6, 1, true, glm::vec4(0.50f,0.50f,0.50f,1.0f) ));
-    internalWalls.push_back(Wall( glm::vec4(17.15f,g_FloorLevel, -12.90f, 1.0f), 5, 6, 1, false, glm::vec4(0.26f,0.50f,0.50f,1.0f) ));
-    internalWalls.push_back(Wall( glm::vec4(8.46f,g_FloorLevel, -12.84f, 1.0f), 6, 6, 1, false, glm::vec4(0.30f,0.50f,0.50f,1.0f) ));
-    internalWalls.push_back(Wall( glm::vec4(15.0f,g_FloorLevel, 14.0f, 1.0f), 10, 6, 1, true, glm::vec4(0.50f,0.50f,0.50f,1.0f) ));
-    internalWalls.push_back(Wall( glm::vec4(15.0f,g_FloorLevel, 5.0f, 1.0f), 8, 6, 1, true, glm::vec4(0.50f,0.50f,0.40f,1.0f) ));
-    internalWalls.push_back(Wall( glm::vec4(10.5f,g_FloorLevel, 2.0f, 1.0f), 10, 6, 1, false,glm::vec4(0.51f,0.50f,0.50f,1.0f) ));
-    internalWalls.push_back(Wall( glm::vec4(15.0f,g_FloorLevel, -7.5f, 1.0f), 10, 6, 1, true, glm::vec4(0.50f,0.50f,0.50f,1.0f) ));
-    internalWalls.push_back(Wall( glm::vec4(5.0f,g_FloorLevel, 1.0f, 1.0f), 10, 6, 1, true, glm::vec4(0.50f,0.50f,0.50f,1.0f) ));
-}
-
-void CreateWalls(std::vector<Wall> &walls){
+void CreateWalls(std::vector<Wall> &outer_walls, std::vector<Wall> &inner_walls){
     // Paredes do limite exterior
         // limite Z positivo
-    walls.push_back(Wall( glm::vec4( 15.0f,g_FloorLevel, 19.5f, 1.0f), 10, 6, 1, false ));
-    walls.push_back(Wall( glm::vec4(  5.0f,g_FloorLevel, 19.5f, 1.0f), 10, 6, 1, false ));
-    walls.push_back(Wall( glm::vec4( -5.0f,g_FloorLevel, 19.5f, 1.0f), 10, 6, 1, false ));
-    walls.push_back(Wall( glm::vec4(-15.0f,g_FloorLevel, 19.5f, 1.0f), 10, 6, 1, false ));
+    outer_walls.push_back(Wall( glm::vec4( 15.0f,g_FloorLevel, 20.5f, 1.0f), 10, 6, 1, false ));
+    outer_walls.push_back(Wall( glm::vec4(  5.0f,g_FloorLevel, 20.5f, 1.0f), 10, 6, 1, false ));
+    outer_walls.push_back(Wall( glm::vec4( -5.0f,g_FloorLevel, 20.5f, 1.0f), 10, 6, 1, false ));
+    outer_walls.push_back(Wall( glm::vec4(-15.0f,g_FloorLevel, 20.5f, 1.0f), 10, 6, 1, false ));
         // limite Z negativo
-    walls.push_back(Wall( glm::vec4( 15.0f,g_FloorLevel,-19.5f, 1.0f), 10, 6, 1, false ));
-    walls.push_back(Wall( glm::vec4(  5.0f,g_FloorLevel,-19.5f, 1.0f), 10, 6, 1, false ));
-    walls.push_back(Wall( glm::vec4( -5.0f,g_FloorLevel,-19.5f, 1.0f), 10, 6, 1, false ));
-    walls.push_back(Wall( glm::vec4(-15.0f,g_FloorLevel,-19.5f, 1.0f), 10, 6, 1, false ));
+    outer_walls.push_back(Wall( glm::vec4( 15.0f,g_FloorLevel,-20.5f, 1.0f), 10, 6, 1, false ));
+    outer_walls.push_back(Wall( glm::vec4(  5.0f,g_FloorLevel,-20.5f, 1.0f), 10, 6, 1, false ));
+    outer_walls.push_back(Wall( glm::vec4( -5.0f,g_FloorLevel,-20.5f, 1.0f), 10, 6, 1, false ));
+    outer_walls.push_back(Wall( glm::vec4(-15.0f,g_FloorLevel,-20.5f, 1.0f), 10, 6, 1, false ));
         // limite X positivo
-    walls.push_back(Wall( glm::vec4( 19.5f,g_FloorLevel, 15.0f, 1.0f), 10, 6, 1, true ));
-    walls.push_back(Wall( glm::vec4( 19.5f,g_FloorLevel,  5.0f, 1.0f), 10, 6, 1, true ));
-    walls.push_back(Wall( glm::vec4( 19.5f,g_FloorLevel, -5.0f, 1.0f), 10, 6, 1, true ));
-    walls.push_back(Wall( glm::vec4( 19.5f,g_FloorLevel,-15.0f, 1.0f), 10, 6, 1, true ));
+    outer_walls.push_back(Wall( glm::vec4( 20.5f,g_FloorLevel, 15.0f, 1.0f), 10, 6, 1, true ));
+    outer_walls.push_back(Wall( glm::vec4( 20.5f,g_FloorLevel,  5.0f, 1.0f), 10, 6, 1, true ));
+    outer_walls.push_back(Wall( glm::vec4( 20.5f,g_FloorLevel, -5.0f, 1.0f), 10, 6, 1, true ));
+    outer_walls.push_back(Wall( glm::vec4( 20.5f,g_FloorLevel,-15.0f, 1.0f), 10, 6, 1, true ));
         // limite X negativo
-    walls.push_back(Wall( glm::vec4(-19.5f,g_FloorLevel, 15.0f, 1.0f), 10, 6, 1, true ));
-    walls.push_back(Wall( glm::vec4(-19.5f,g_FloorLevel,  5.0f, 1.0f), 10, 6, 1, true ));
-    walls.push_back(Wall( glm::vec4(-19.5f,g_FloorLevel, -5.0f, 1.0f), 10, 6, 1, true ));
-    walls.push_back(Wall( glm::vec4(-19.5f,g_FloorLevel,-15.0f, 1.0f), 10, 6, 1, true ));
+    outer_walls.push_back(Wall( glm::vec4(-20.5f,g_FloorLevel, 15.0f, 1.0f), 10, 6, 1, true ));
+    outer_walls.push_back(Wall( glm::vec4(-20.5f,g_FloorLevel,  5.0f, 1.0f), 10, 6, 1, true ));
+    outer_walls.push_back(Wall( glm::vec4(-20.5f,g_FloorLevel, -5.0f, 1.0f), 10, 6, 1, true ));
+    outer_walls.push_back(Wall( glm::vec4(-20.5f,g_FloorLevel,-15.0f, 1.0f), 10, 6, 1, true ));
+
+    // Paredes internas
+    inner_walls.push_back(Wall( glm::vec4(-11.0f,g_FloorLevel,-15.5f, 1.0f), 10, 6, 1, false ));
+    inner_walls.push_back(Wall( glm::vec4(-15.5f,g_FloorLevel,-11.0f, 1.0f), 10, 6, 1, true ));
+    inner_walls.push_back(Wall( glm::vec4( 11.0f,g_FloorLevel, 15.5f, 1.0f), 10, 6, 1, false ));
+    inner_walls.push_back(Wall( glm::vec4( 15.5f,g_FloorLevel, 11.0f, 1.0f), 10, 6, 1, true ));
+    inner_walls.push_back(Wall( glm::vec4(-11.0f,g_FloorLevel, 15.5f, 1.0f), 10, 6, 1, false ));
+    inner_walls.push_back(Wall( glm::vec4(-15.5f,g_FloorLevel, 11.0f, 1.0f), 10, 6, 1, true ));
+    inner_walls.push_back(Wall( glm::vec4( 11.0f,g_FloorLevel,-15.5f, 1.0f), 10, 6, 1, false ));
+    inner_walls.push_back(Wall( glm::vec4( 15.5f,g_FloorLevel,-11.0f, 1.0f), 10, 6, 1, true ));
+
+    inner_walls.push_back(Wall( glm::vec4(  5.0f,g_FloorLevel,-10.5f, 1.0f), 10, 6, 1, false ));
+    inner_walls.push_back(Wall( glm::vec4( 10.5f,g_FloorLevel,  5.0f, 1.0f), 10, 6, 1, true ));
+    inner_walls.push_back(Wall( glm::vec4( -5.0f,g_FloorLevel, 10.5f, 1.0f), 10, 6, 1, false ));
+    inner_walls.push_back(Wall( glm::vec4(-10.5f,g_FloorLevel, -5.0f, 1.0f), 10, 6, 1, true ));
+
+    inner_walls.push_back(Wall( glm::vec4(  0.0f,g_FloorLevel,-15.0f, 1.0f), 10, 6, 1, true ));
+    inner_walls.push_back(Wall( glm::vec4(  0.0f,g_FloorLevel, 15.0f, 1.0f), 10, 6, 1, true ));
+    inner_walls.push_back(Wall( glm::vec4( 15.0f,g_FloorLevel,  0.0f, 1.0f), 10, 6, 1, false ));
+    inner_walls.push_back(Wall( glm::vec4(-15.0f,g_FloorLevel,  0.0f, 1.0f), 10, 6, 1, false ));
 }
 
 // Função que carrega uma imagem para ser utilizada como textura
