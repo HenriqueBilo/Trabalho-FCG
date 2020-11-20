@@ -184,7 +184,7 @@ float g_AngleZ = 0.0f;
 bool g_WinCondition = false;
 bool g_GameEnded = false;
 glm::vec4 g_PlayerSpawnPoint = glm::vec4(-18.0f,0.0f,-18.0f,1.0f);
-float g_MovementSpeed = 0.05f;
+float g_MovementSpeed = 0.01f;
 
 float g_FloorLevel = -1.1f;
 
@@ -392,6 +392,10 @@ int main(int argc, char* argv[])
     Key blue_key(glm::vec4(10.0f,1.0f,18.0f,1.0f));
     Sphere cow_collider( glm::vec4(0.0f,0.0f,0.0f,1.0f), 2.0f);
 
+    // Variaveis de controle de tempo
+    float start_time = glfwGetTime();
+    float curr_time = glfwGetTime();
+
     // Popular o vetor de colliders
     std::vector<AABB> box_colliders;
     for (auto wall : outer_walls) {
@@ -410,6 +414,8 @@ int main(int argc, char* argv[])
     // Ficamos em loop, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
     {
+        curr_time = glfwGetTime();
+        player.movement_speed = g_MovementSpeed * (curr_time - start_time);
 
         // Aqui executamos as operações de renderização
         glm::mat4 model = Matrix_Identity(); // Transformação identidade de modelagem
@@ -687,7 +693,6 @@ int main(int argc, char* argv[])
             TextRendering_GameWin(window);
         }
         else{
-            TextRendering_GameWin(window);
             TextRendering_ShowChaves(window, red_key, green_key, blue_key);
             TextRendering_ShowFramesPerSecond(window);
         }
@@ -1652,9 +1657,9 @@ void TextRendering_GameWin(GLFWwindow* window)
     float charwidth = TextRendering_CharWidth(window);
 
     char buffer[80];
-    numchars = snprintf(buffer, 80, "YOU WIN!!!");
+    snprintf(buffer, 80, "YOU WIN!!!");
 
-    TextRendering_PrintString(window, buffer, charwidth/2, lineheight/2, 5.0f);
+    TextRendering_PrintString(window, buffer, (charwidth-1.0f)/2, lineheight/2, 5.0f);
 }
 
 // Escrevemos na tela o número de quadros renderizados por segundo (frames per
