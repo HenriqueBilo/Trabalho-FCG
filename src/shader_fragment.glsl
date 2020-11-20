@@ -99,17 +99,16 @@ void main()
 
     if ( object_id == PERSONAGEM )
     {
-        float minx = bbox_min.x;
-        float maxx = bbox_max.x;
+        vec4 bbox_center = (bbox_min + bbox_max) / 2.0;
 
-        float miny = bbox_min.y;
-        float maxy = bbox_max.y;
+        vec4 direction = position_model-bbox_center;
 
-        float minz = bbox_min.z;
-        float maxz = bbox_max.z;
+        float theta = atan((direction.x),(direction.z));
 
-        U = (position_model.x - minx) / (maxx - minx);
-        V = (position_model.y - miny) / (maxy - miny);
+        float phi = asin((direction.y)/length(direction));
+
+        U = 0.5f + theta/(2 * M_PI);
+        V = 0.5f + phi/M_PI;
 
         Kd = texture(TextureImage1, vec2(U,V)).rgb;
     }

@@ -586,6 +586,15 @@ int main(int argc, char* argv[])
         if (!green_key.collected) green_key.collected = Sphere2SphereCollision(player.sphere_collider, green_key.sphere_collider);
         if (!blue_key.collected) blue_key.collected = Sphere2SphereCollision(player.sphere_collider, blue_key.sphere_collider);
 
+        g_WinCondition = red_key.collected && green_key.collected && blue_key.collected;
+
+        if (g_WinCondition){
+            for ( int i=0; i<fences.size(); i++ ){
+                box_colliders.pop_back();
+            }
+            fences.clear();
+        }
+
         if (!g_UseFirstPersonCamera){
 
             float animation_coeficient = 0;
