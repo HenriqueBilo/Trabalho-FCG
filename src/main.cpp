@@ -52,6 +52,7 @@
 #include "Collisions.hpp"
 #include "Player.hpp"
 #include "AABB.hpp"
+#include "Sphere.hpp"
 #include "Wall.hpp"
 #include "Key.hpp"
 #include "Fence.hpp"
@@ -120,6 +121,7 @@ void TextRendering_PrintMatrixVectorProductDivW(GLFWwindow* window, glm::mat4 M,
 // outras informações do programa. Definidas após main().
 void TextRendering_ShowFramesPerSecond(GLFWwindow* window);
 void TextRendering_ShowChaves(GLFWwindow* window, Key r, Key g, Key b);
+void TextRendering_GameWin(GLFWwindow* window);
 
 // Funções callback para comunicação com o sistema operacional e interação do
 // usuário. Veja mais comentários nas definições das mesmas, abaixo.
@@ -180,6 +182,7 @@ float g_AngleZ = 0.0f;
 // Variaveis globais de controle do jogo
 
 bool g_WinCondition = false;
+bool g_GameEnded = false;
 glm::vec4 g_PlayerSpawnPoint = glm::vec4(-18.0f,0.0f,-18.0f,1.0f);
 float g_MovementSpeed = 0.05f;
 
@@ -387,6 +390,7 @@ int main(int argc, char* argv[])
     Key red_key(glm::vec4(3.0f,1.0f,-15.0f,1.0f));
     Key green_key(glm::vec4(-18.0f,1.0f,18.0f,1.0f));
     Key blue_key(glm::vec4(10.0f,1.0f,18.0f,1.0f));
+    Sphere cow_collider( glm::vec4(0.0f,0.0f,0.0f,1.0f), 2.0f);
 
     // Popular o vetor de colliders
     std::vector<AABB> box_colliders;
@@ -494,20 +498,24 @@ int main(int argc, char* argv[])
         glm::mat4 view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
 
         // movimentação do personagem
-        if (g_WKeyPressed){
-                player.move( camera_forward_vector, box_colliders );
-        }
+        if ( !g_GameEnded ){
+        
+            if (g_WKeyPressed){
+                    player.move( camera_forward_vector, box_colliders );
+            }
 
-        if (g_AKeyPressed){
-                player.move( -camera_right_vector, box_colliders );
-        }
+            if (g_AKeyPressed){
+                    player.move( -camera_right_vector, box_colliders );
+            }
 
-        if (g_SKeyPressed){
-                player.move( -camera_forward_vector, box_colliders );
-        }
+            if (g_SKeyPressed){
+                    player.move( -camera_forward_vector, box_colliders );
+            }
 
-        if (g_DKeyPressed){
-                player.move( camera_right_vector, box_colliders );
+            if (g_DKeyPressed){
+                    player.move( camera_right_vector, box_colliders );
+            }
+
         }
 
         // Agora computamos a matriz de Projeção.
@@ -578,12 +586,18 @@ int main(int argc, char* argv[])
 
         g_WinCondition = red_key.collected && green_key.collected && blue_key.collected;
 
-        if (g_WinCondition){
-            for ( int i=0; i<fences.size(); i++ ){
-                box_colliders.pop_back();
+        if ( g_WinCondition ){
+            if( (int)fences.size()>0  ){
+                for ( int i=0; i<(int)fences.size(); i++ ){
+                    box_colliders.pop_back();
+                }
+                fences.clear();
             }
-            fences.clear();
+            else if( Sphere2SphereCollision(player.sphere_collider, cow_collider) ){
+                g_GameEnded = true;
+            }
         }
+
 
         if (!g_UseFirstPersonCamera){
 
@@ -608,10 +622,12 @@ int main(int argc, char* argv[])
         DrawVirtualObject("plane");
 
         // Desenhamos o modelo da vaca
-        model = Matrix_Translate(0.0f,0.0f, 0.0f)
-                 * Matrix_Scale( g_1KeyPressed ? 1.0f : 2.0f,
-                                 g_2KeyPressed ? 1.0f : 2.0f,
-                                 g_3KeyPressed ? 1.0f : 2.0f );
+        model = Matrix_Translate(cow_collider.center.x,
+                                 cow_collider.center.y,
+                                 cow_collider.center.z)
+              * Matrix_Scale( g_1KeyPressed ? 1.0f : 2.0f,
+                              g_2KeyPressed ? 1.0f : 2.0f,
+                              g_3KeyPressed ? 1.0f : 2.0f );
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, COW);
         DrawVirtualObject("cow");
@@ -667,8 +683,14 @@ int main(int argc, char* argv[])
         }
         
         // imprime na tela informacoes do jogo
-        TextRendering_ShowChaves(window, red_key, green_key, blue_key);
-        TextRendering_ShowFramesPerSecond(window);
+        if( g_GameEnded ){
+            TextRendering_GameWin(window);
+        }
+        else{
+            TextRendering_GameWin(window);
+            TextRendering_ShowChaves(window, red_key, green_key, blue_key);
+            TextRendering_ShowFramesPerSecond(window);
+        }
 
         // O framebuffer onde OpenGL executa as operações de renderização não
         // é o mesmo que está sendo mostrado para o usuário, caso contrário
@@ -1398,8 +1420,10 @@ void CursorPosCallback(GLFWwindow* window, double xpos, double ypos)
         float dy = ypos - g_LastCursorPosY;
 
         // Atualizamos parâmetros da câmera com os deslocamentos
-        g_CameraTheta -= 0.01f*dx;
-        g_CameraPhi   += 0.01f*dy;
+        if ( !g_GameEnded ){
+            g_CameraTheta -= 0.01f*dx;
+            g_CameraPhi   += 0.01f*dy;
+        }
 
         // Atualizamos as variáveis globais para armazenar a posição atual do
         // cursor como sendo a última posição conhecida do cursor.
@@ -1620,6 +1644,17 @@ void TextRendering_ShowChaves(GLFWwindow* window, Key r, Key g, Key b)
     snprintf(buffer, 80, "Chaves coletadas: %d/3\n", r.collected + g.collected + b.collected);
 
     TextRendering_PrintString(window, buffer, -1.0f+pad/10, -1.0f+2*pad/10, 1.0f);
+}
+
+void TextRendering_GameWin(GLFWwindow* window)
+{
+    float lineheight = TextRendering_LineHeight(window);
+    float charwidth = TextRendering_CharWidth(window);
+
+    char buffer[80];
+    numchars = snprintf(buffer, 80, "YOU WIN!!!");
+
+    TextRendering_PrintString(window, buffer, charwidth/2, lineheight/2, 5.0f);
 }
 
 // Escrevemos na tela o número de quadros renderizados por segundo (frames per
